@@ -34,13 +34,15 @@ Tujuan project: membangun web dashboard untuk merapihkan flow kerja dan memudahk
 
 | Layer | Pilihan | Alasan |
 |-------|---------|--------|
-| Frontend + Backend | **Next.js** (App Router) | SSR, API routes dalam satu project, scalable |
-| Database + Auth + Storage | **Supabase** | Free tier, PostgreSQL, RLS bawaan, storage untuk file PDF/gambar |
+| Frontend + Backend | **Next.js 14** (App Router) | SSR, API routes dalam satu project, scalable |
+| Database + Auth + Storage | **Supabase** (`mtpzxtqalqqghwokqkkf`) | Free tier, PostgreSQL, RLS bawaan, storage untuk file PDF/gambar |
 | Hosting | **Vercel** | Free tier, deploy otomatis dari GitHub |
+| UI Framework | **shadcn/ui** + Tailwind CSS | Komponen production-ready (Table, Dialog, Form, Tabs, dll) |
 | Notifikasi approval | **WhatsApp Business API atau Telegram Bot** | Inline token link untuk approval GM |
 | Dokumen Word | **npm `docx`** | Generate file .docx dari server |
 | PDF stamping | **npm `pdf-lib`** | Overlay tanda tangan GM ke PDF LoA |
-| Chart | **Chart.js 4.x** | Ringan, fleksibel |
+| Chart | **Chart.js 4.x** + react-chartjs-2 | Ringan, fleksibel |
+| Form handling | **react-hook-form** + **zod** | Validasi form + type-safe schema |
 
 ---
 
@@ -83,8 +85,9 @@ TENTATIVE → DEFINITE → ACTUAL (happy path, terminal)
 
 ## 5. Klasifikasi (Dua Dimensi — Jangan Dicampur)
 
-1. **Segmen** (4 nilai tetap): `corporate` / `government` / `sosial` / `retail`  
-   → Dipakai di leads, bookings, targets, semua filter report
+1. **Segmen** (5 nilai tetap): `Wedding` / `Private` / `Corporate` / `BUMN` / `Government`  
+   → Dipakai di leads, bookings, targets, semua filter report  
+   → Disimpan sebagai PostgreSQL enum `segmen_enum`
 
 2. **Line Business**: industri perusahaan klien (Oil & Gas, Mining, Telco, IT, dll)  
    → Informasi tambahan di data leads saja
@@ -192,7 +195,7 @@ Projected GP% = ...
 ```
 
 **Master Recipe Database:**
-- File sumber: `Gabungan_Recipe_Katering.json` (282 records, 29 unique SKUs format FG-XXXX)
+- File sumber: `Gabungan_Recipe_Katering.json` (282 records, 30 unique SKUs format FG-XXXX)
 - 100% item menu IB bersumber dari database ini
 - Saat CC tambah item menu ke IB: `price_per_pax` di-snapshot dari `master_recipes` → disimpan di `ib_food_items.price_per_pax`
 - **Snapshot, bukan live** — kalau harga recipe berubah kemudian, IB lama tidak terpengaruh
@@ -229,12 +232,13 @@ Projected GP% = ...
 
 ---
 
-## 8. Database ERD — 15 Tabel
+## 8. Database ERD — 16 Tabel
 
 ### Konvensi
-- Semua PK: `uuid` (generated Supabase)
+- Semua PK: `uuid` (generated via `gen_random_uuid()`)
 - Semua tabel ada `created_at timestamptz DEFAULT now()`
 - Gunakan Supabase RLS untuk enforce akses per role
+- Migration file: `docs/migration_001_init.sql` (sudah include enum, tabel, indexes, RLS, default roles, auth trigger)
 
 ---
 
@@ -263,8 +267,8 @@ Projected GP% = ...
 | id | uuid | PK | |
 | company_name | varchar(200) | NOT NULL | Nama perusahaan/organisasi klien |
 | address | text | NULLABLE | Alamat kantor atau lokasi event |
-| segmen | enum | NOT NULL | corporate/government/sosial/retail |
-| line_business | varchar(100) | NULLABLE | Industri klien |
+| segmen | segmen_enum | NULLABLE | Wedding/Private/Corporate/BUMN/Government |
+| line_business | varchar(100) | NULLABLE | Industri klien (Banking, Oil & Gas, dll) |
 | sales_id | uuid | FK → users.id | Sales pemilik lead |
 
 > **Catatan:** PIC (kontak person) tidak lagi di tabel ini — ada di `lead_contacts` (tidak ada batas jumlah)
@@ -306,7 +310,7 @@ Projected GP% = ...
 | event_type | varchar(100) | NULLABLE | Jenis event (seminar, meeting, dll) |
 | venue | varchar(200) | NULLABLE | Lokasi/venue |
 | pax | integer | NOT NULL | Jumlah tamu/porsi |
-| segmen | enum | NOT NULL | corporate/government/sosial/retail |
+| segmen | segmen_enum | NULLABLE | Wedding/Private/Corporate/BUMN/Government |
 | is_exception | boolean | DEFAULT false | True = bypass approval standar |
 | exception_reason | text | NULLABLE | Wajib diisi jika is_exception = true |
 | exception_approved_by | uuid | FK → users.id, NULLABLE | GM yang approve exception |
@@ -550,38 +554,57 @@ Semua aturan ini wajib di-enforce di level API/server-action, bukan hanya UI.
 
 ---
 
-## 12. File di Folder Ini
+## 12. Struktur Folder & File
 
-Hanya file yang dibutuhkan untuk development. File versi lama sudah dihapus.
+```
+UCR-SALES-FUNNEL/
+├── docs/                          ← semua dokumentasi ada di sini
+│   ├── PROJECT_BRIEF_UCR.md       ← file ini, baca pertama kali
+│   ├── DEVELOPMENT_GUIDE.md       ← setup Next.js, shadcn, folder structure, roadmap 6 bulan
+│   ├── migration_001_init.sql     ← DDL 16 tabel + RLS + roles. Jalankan pertama di Supabase
+│   ├── seeder.sql                 ← master_recipes (30 SKU) + menu_packages (25 paket)
+│   ├── seeder_leads.sql           ← 1,054 leads + 1,079 lead_contacts dari data sales
+│   ├── BRD_Sales_Dashboard_UCR_v3.docx
+│   ├── ERD_UCR_v1.docx            ← ERD 16 tabel lengkap
+│   ├── LoA_Struktur_Requirements_UCR_v1.docx
+│   ├── IB_Struktur_Requirements_UCR_v1.docx
+│   ├── BEO_Struktur_Requirements_UCR_v1.docx
+│   ├── Permission_Matrix_UCR_v1.docx
+│   ├── Format_Reporting_UCR_v1.docx
+│   └── flowchart_ucr_v2.png
+│
+└── ucr-sales-funnel/              ← Next.js project (dibuat saat development mulai)
+    ├── src/
+    ├── package.json
+    └── ...
+```
 
-| File | Isi | Status |
-|------|-----|--------|
-| `PROJECT_BRIEF_UCR.md` | **File ini** — master reference untuk Claude. Baca ini dulu sebelum file lain. | ✅ Aktif |
-| `BRD_Sales_Dashboard_UCR_v3.docx` | BRD final v3.0 — source of truth high-level. Semua keputusan sudah dikunci. | ✅ Aktif |
-| `IB_Struktur_Requirements_UCR_v1.docx` | Struktur IB detail — field definitions, kalkulasi, Overhead Library, Suggest Price | ✅ Aktif |
-| `BEO_Struktur_Requirements_UCR_v1.docx` | Struktur BEO detail — amendment system, BEO Darurat edge case | ✅ Aktif |
-| `LoA_Struktur_Requirements_UCR_v1.docx` | Struktur LoA detail — approval flow 6 langkah, token, signature stamp | ✅ Aktif |
-| `Permission_Matrix_UCR_v1.docx` | Matrix permission semua role × modul (~60 baris) | ✅ Aktif |
-| `Format_Reporting_UCR_v1.docx` | Spesifikasi 6 tab dashboard — kolom, chart, filter, export | ✅ Aktif |
-| `ERD_UCR_v1.docx` | ERD 16 tabel — field definitions, constraints, relationship matrix, dev notes | ✅ Aktif |
-| `seeder.sql` | SQL seeder untuk `master_recipes` (29 SKU) + `menu_packages` (25 paket) | ✅ Aktif |
-| `flowchart_ucr_v2.png` | Flowchart happy path + exception path (visual) | ✅ Aktif |
+**Urutan jalankan SQL di Supabase SQL Editor:**
+1. `migration_001_init.sql` → create semua tabel, enum, RLS, default roles
+2. `seeder.sql` → master_recipes + menu_packages
+3. `seeder_leads.sql` → leads + lead_contacts (1,054 records)
+4. Set Super Admin: `UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'Super Admin') WHERE email = 'arnoldsupriyadi@gmail.com';`
 
-**File yang sudah dihapus (tidak dibutuhkan lagi):**
-- `BRD_PRD_Sales_Dashboard_UCR.pdf` — v1.0, model B2B generik, sudah tidak berlaku
+**File yang sudah dihapus:**
+- `BRD_PRD_Sales_Dashboard_UCR.pdf` — v1.0, sudah tidak berlaku
 - `BRD_Sales_Dashboard_UCR_v2.docx` — digantikan v3.0
-- `flowchart_umara.png` — versi lama, digantikan flowchart_ucr_v2.png
+- `flowchart_umara.png` — digantikan flowchart_ucr_v2.png
 
 ---
 
-## 13. Cara Lanjutkan di Device Lain
+## 13. Cara Lanjutkan di Device Lain (Claude Code)
 
-Berikan file ini ke Claude dan katakan:
+Buka folder `UCR-SALES-FUNNEL/docs/` di Claude Code, lalu ketik:
 
-> *"Ini adalah master brief untuk project UCR Sales Funnel milik Arnold. Baca seluruh file ini. Tech stack sudah final (Next.js + Supabase + Vercel). Dokumentasi selesai. Bantu saya mulai development."*
+> *"Baca file PROJECT_BRIEF_UCR.md dan DEVELOPMENT_GUIDE.md, lalu lanjutkan development UCR Sales Funnel."*
 
-Claude akan langsung paham konteks penuh tanpa perlu penjelasan ulang.
+Claude Code akan langsung paham konteks penuh tanpa perlu penjelasan ulang.
+
+**Kalau ada perubahan requirement:**
+1. Update `PROJECT_BRIEF_UCR.md` dulu (section yang relevan)
+2. Kalau ada perubahan schema → buat `migration_002_nama_perubahan.sql` (jangan edit migration_001)
+3. Kalau ada perubahan fitur → update section yang relevan di brief ini
 
 ---
 
-*Terakhir diupdate: Mei 2025 — Arnold Supriyadi / PT Umara Cipta Rasa*
+*Terakhir diupdate: 25 Mei 2026 — Arnold Supriyadi / PT Umara Cipta Rasa*
