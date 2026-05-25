@@ -1,6 +1,6 @@
 # UCR Sales Funnel — Development Guide
-**Versi:** 1.0.0 | **Tanggal:** 2026-05-25  
-**Stack:** Next.js 14 (App Router) + Supabase + Vercel
+**Versi:** 1.1.0 | **Tanggal:** 2026-05-25  
+**Stack:** Next.js 14 (App Router) + Supabase + VPS (Hetzner)
 
 ---
 
@@ -293,7 +293,11 @@ ucr-sales-funnel/
 - [ ] Notifikasi real-time (Supabase Realtime untuk status changes)
 - [ ] Error handling, loading states, empty states
 - [ ] Testing end-to-end semua flow
-- [ ] Deploy ke Vercel
+- [ ] Setup VPS Hetzner CX22 (Ubuntu 22.04, region Singapura)
+- [ ] Install Node.js 20, PM2, Nginx, Certbot
+- [ ] Setup GitHub Actions deploy workflow (`.github/workflows/deploy.yml`)
+- [ ] Setup SSL via Certbot + domain
+- [ ] Deploy ke VPS — ikuti Section 6 di guide ini
 
 ---
 
@@ -350,10 +354,256 @@ Ini generate tipe otomatis untuk semua 16 tabel — tidak perlu tulis manual.
 
 ---
 
-## 6. File-file yang Tersedia di Folder Ini
+## 6. Deploy ke VPS (Tanpa Coolify)
+
+Stack: **Hetzner VPS** + **Nginx** + **PM2** + **GitHub Actions**
+
+### 6.1 Spesifikasi VPS yang Direkomendasikan
+- Provider: **Hetzner** (hetzner.com) — paling worth it harga/performa
+- Plan: **CX22** — 2 vCPU, 4GB RAM, 40GB SSD = €4/bulan
+- OS: **Ubuntu 22.04 LTS**
+- Region: **Singapura** (paling dekat Indonesia)
+
+---
+
+### 6.2 Setup VPS (Lakukan Sekali)
+
+**a) Login ke VPS dan install dependencies:**
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Node.js 20 LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Install PM2 (process manager)
+sudo npm install -g pm2
+
+# Install Nginx
+sudo apt install -y nginx
+
+# Install Certbot (SSL gratis dari Let's Encrypt)
+sudo apt install -y certbot python3-certbot-nginx
+```
+
+**b) Buat user deploy (jangan pakai root):**
+```bash
+sudo adduser deploy
+sudo usermod -aG sudo deploy
+sudo su - deploy
+```
+
+**c) Setup SSH key untuk GitHub Actions:**
+```bash
+# Di VPS, generate SSH key
+ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions
+
+# Tambahkan public key ke authorized_keys
+cat ~/.ssh/github_actions.pub >> ~/.ssh/authorized_keys
+
+# Copy private key — ini yang akan dimasukkan ke GitHub Secrets
+cat ~/.ssh/github_actions
+```
+
+---
+
+### 6.3 Setup Nginx
+
+Buat config untuk domain kamu (contoh: `app.umaracatering.com`):
+
+```bash
+sudo nano /etc/nginx/sites-available/ucr-sales-funnel
+```
+
+Isi dengan:
+```nginx
+server {
+    listen 80;
+    server_name app.umaracatering.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+Aktifkan dan test:
+```bash
+sudo ln -s /etc/nginx/sites-available/ucr-sales-funnel /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+**Setup SSL (HTTPS):**
+```bash
+sudo certbot --nginx -d app.umaracatering.com
+# Certbot akan auto-renew setiap 90 hari
+```
+
+---
+
+### 6.4 Setup Environment Variables di VPS
+
+```bash
+# Di VPS, buat file .env.production
+nano /home/deploy/ucr-sales-funnel/.env.production
+```
+
+Isi:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://mtpzxtqalqqghwokqkkf.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NODE_ENV=production
+```
+
+---
+
+### 6.5 PM2 Config
+
+Buat file `ecosystem.config.js` di root Next.js project:
+
+```js
+module.exports = {
+  apps: [
+    {
+      name: 'ucr-sales-funnel',
+      script: 'node_modules/.bin/next',
+      args: 'start',
+      cwd: '/home/deploy/ucr-sales-funnel',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 3000,
+      },
+    },
+  ],
+}
+```
+
+Jalankan pertama kali manual:
+```bash
+cd /home/deploy/ucr-sales-funnel
+npm install
+npm run build
+pm2 start ecosystem.config.js --env production
+pm2 save
+pm2 startup  # agar PM2 auto-start saat VPS reboot
+```
+
+---
+
+### 6.6 GitHub Actions — Auto Deploy (CI/CD)
+
+Buat file `.github/workflows/deploy.yml` di repo Next.js:
+
+```yaml
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main  # deploy otomatis setiap push ke main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/deploy/ucr-sales-funnel
+            git pull origin main
+            npm ci --production
+            npm run build
+            pm2 restart ucr-sales-funnel
+            echo "Deploy selesai!"
+```
+
+**GitHub Secrets yang perlu ditambahkan:**
+
+Pergi ke GitHub repo → Settings → Secrets and variables → Actions → New repository secret:
+
+| Secret Name | Value |
+|---|---|
+| `VPS_HOST` | IP address VPS kamu |
+| `VPS_SSH_KEY` | Private key dari step 6.2c |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+
+---
+
+### 6.7 Flow Deploy Setelah Setup
+
+Setelah semua setup selesai, workflow harian kamu:
+
+```
+Code di lokal → git push origin main → GitHub Actions build & test
+→ SSH ke VPS → git pull → npm build → pm2 restart → selesai
+```
+
+Waktu deploy: sekitar **2–3 menit** per push.
+
+---
+
+### 6.8 Monitoring Sederhana
+
+```bash
+# Lihat status app
+pm2 status
+
+# Lihat logs real-time
+pm2 logs ucr-sales-funnel
+
+# Lihat penggunaan CPU/RAM
+pm2 monit
+
+# Restart manual kalau ada masalah
+pm2 restart ucr-sales-funnel
+```
+
+---
+
+## 7. File-file di Folder docs/
 
 | File | Keterangan |
 |---|---|
+| `PROJECT_BRIEF_UCR.md` | Master reference — baca ini dulu |
+| `DEVELOPMENT_GUIDE.md` | File ini |
 | `migration_001_init.sql` | DDL 16 tabel + RLS + default roles. Jalankan pertama. |
 | `seeder.sql` | master_recipes (30 SKU) + menu_packages (25 paket) |
 | `seeder_leads.sql` | 1,054 leads + 1,079 lead_contacts dari data sales |
@@ -364,4 +614,4 @@ Ini generate tipe otomatis untuk semua 16 tabel — tidak perlu tulis manual.
 | `BEO_Struktur_Requirements_UCR_v1.docx` | Spesifikasi dokumen BEO |
 | `Format_Reporting_UCR_v1.docx` | Spesifikasi 6 tab reports |
 | `Permission_Matrix_UCR_v1.docx` | Matrix permission per role |
-| `PROJECT_BRIEF_UCR.md` | Ringkasan seluruh project (untuk referensi cepat) |
+| `flowchart_ucr_v2.png` | Flowchart happy path + exception path |
