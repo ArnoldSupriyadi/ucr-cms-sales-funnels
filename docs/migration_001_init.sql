@@ -235,6 +235,52 @@ CREATE TABLE loa_items (
 COMMENT ON TABLE loa_items IS 'Line items on LoA. package_name can reference menu_packages but no FK (free text allowed).';
 
 -- ============================================================
+-- SECTION 9 (MOVED UP): DOMAIN 8 — MASTER DATA
+-- Must be created before Section 7 (IB) due to FK reference
+-- from ib_food_items → master_recipes
+-- ============================================================
+
+CREATE TABLE master_recipes (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sku           VARCHAR(20) NOT NULL UNIQUE,
+  product_name  VARCHAR(255) NOT NULL,
+  menu_structure VARCHAR(100),
+  segment_menu  VARCHAR(100),
+  unit_size     NUMERIC(10,4),
+  uom           VARCHAR(20),
+  price_per_pax NUMERIC(12,4),  -- NULL for Batch/GR units, filled manually
+  is_active     BOOLEAN NOT NULL DEFAULT true,
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE master_recipes IS '30 SKUs food cost master. price_per_pax NULL for Batch/GR units (filled manually by CC via UI).';
+
+CREATE TABLE menu_packages (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  kategori        VARCHAR(100) NOT NULL,
+  nama_paket      VARCHAR(255) NOT NULL,
+  harga_minimum   NUMERIC(12,2),
+  harga_maksimum  NUMERIC(12,2),
+  satuan          VARCHAR(50),
+  ketentuan       TEXT,
+  is_active       BOOLEAN NOT NULL DEFAULT true,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE menu_packages IS 'Package catalog for LoA dropdown. 25 packages pre-seeded from Katalog_Umum_Umara. No FK to master_recipes (Phase 1).';
+
+CREATE TABLE overhead_library (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  item_name       VARCHAR(255) NOT NULL UNIQUE,
+  default_unit    VARCHAR(50),
+  last_unit_price NUMERIC(12,2),
+  usage_count     INTEGER NOT NULL DEFAULT 0,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE overhead_library IS 'Grows organically from CC overhead input. Sorted by usage_count for autocomplete suggestions.';
+
+-- ============================================================
 -- SECTION 7: DOMAIN 6 — IB (INTERNAL BREAKDOWN)
 -- ============================================================
 
@@ -319,50 +365,6 @@ CREATE TABLE beo (
 );
 
 COMMENT ON TABLE beo IS 'Banquet Event Order. Can be created from Tentative. is_emergency=true = BEO Darurat (pre-Tentative, ops must reconfirm).';
-
--- ============================================================
--- SECTION 9: DOMAIN 8 — MASTER DATA
--- ============================================================
-
-CREATE TABLE master_recipes (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  sku           VARCHAR(20) NOT NULL UNIQUE,
-  product_name  VARCHAR(255) NOT NULL,
-  menu_structure VARCHAR(100),
-  segment_menu  VARCHAR(100),
-  unit_size     NUMERIC(10,4),
-  uom           VARCHAR(20),
-  price_per_pax NUMERIC(12,4),  -- NULL for Batch/GR units, filled manually
-  is_active     BOOLEAN NOT NULL DEFAULT true,
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-COMMENT ON TABLE master_recipes IS '30 SKUs food cost master. price_per_pax NULL for Batch/GR units (filled manually by CC via UI).';
-
-CREATE TABLE menu_packages (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  kategori        VARCHAR(100) NOT NULL,
-  nama_paket      VARCHAR(255) NOT NULL,
-  harga_minimum   NUMERIC(12,2),
-  harga_maksimum  NUMERIC(12,2),
-  satuan          VARCHAR(50),
-  ketentuan       TEXT,
-  is_active       BOOLEAN NOT NULL DEFAULT true,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-COMMENT ON TABLE menu_packages IS 'Package catalog for LoA dropdown. 25 packages pre-seeded from Katalog_Umum_Umara. No FK to master_recipes (Phase 1).';
-
-CREATE TABLE overhead_library (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  item_name       VARCHAR(255) NOT NULL UNIQUE,
-  default_unit    VARCHAR(50),
-  last_unit_price NUMERIC(12,2),
-  usage_count     INTEGER NOT NULL DEFAULT 0,
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-COMMENT ON TABLE overhead_library IS 'Grows organically from CC overhead input. Sorted by usage_count for autocomplete suggestions.';
 
 -- ============================================================
 -- SECTION 10: INDEXES (performance)

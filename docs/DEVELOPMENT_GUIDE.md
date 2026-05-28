@@ -19,7 +19,7 @@ Paste: docs/seeder_leads.sql → Run
 -- Di Supabase SQL Editor, setelah daftar via Auth:
 UPDATE users
 SET role_id = (SELECT id FROM roles WHERE name = 'Super Admin')
-WHERE email = 'arnoldsupriyadi@gmail.com';
+WHERE email = 'superadminucr@gmail.com';
 ```
 
 ### Step 3 — Init Next.js Project
