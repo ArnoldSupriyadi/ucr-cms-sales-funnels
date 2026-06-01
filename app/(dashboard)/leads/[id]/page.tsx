@@ -9,8 +9,8 @@ import { ContactCard } from '@/features/leads/components/contact-card'
 import { SEGMEN_COLORS } from '@/lib/constants/segmen'
 import { formatDate } from '@/lib/utils/format'
 import { Pencil, MapPin, Briefcase, CalendarDays } from 'lucide-react'
-import type { LeadWithContacts, BookingWithLead } from '@/types/domain'
-import { BOOKING_STATUS_COLORS } from '@/lib/constants/status'
+import type { LeadWithContacts, OrderWithLead } from '@/types/domain'
+import { ORDER_STATUS_COLORS } from '@/lib/constants/status'
 
 export default async function LeadDetailPage({
   params,
@@ -21,14 +21,14 @@ export default async function LeadDetailPage({
   const [supabase, user] = await Promise.all([createClient(), getAppUser()])
   if (!user) return null
 
-  const [{ data: lead }, { data: bookings }] = await Promise.all([
+  const [{ data: lead }, { data: orders }] = await Promise.all([
     supabase
       .from('leads')
       .select('*, lead_contacts(*), users(id, name)')
       .eq('id', id)
       .single(),
     supabase
-      .from('bookings')
+      .from('orders')
       .select('*, leads(id, company_name, segmen), users(id, name)')
       .eq('lead_id', id)
       .order('event_date', { ascending: false }),
@@ -92,47 +92,47 @@ export default async function LeadDetailPage({
           />
         </div>
 
-        {/* Bookings */}
+        {/* Orders */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-base">
-                Bookings ({bookings?.length ?? 0})
+                Orders ({orders?.length ?? 0})
               </CardTitle>
-              {user.permissions['bookings.create'] && (
-                <Link href={`/bookings/new?lead_id=${id}`}>
+              {user.permissions['orders.create'] && (
+                <Link href={`/orders/new?lead_id=${id}`}>
                   <Button size="sm" variant="outline">
-                    Buat Booking
+                    Buat Order
                   </Button>
                 </Link>
               )}
             </CardHeader>
             <CardContent>
-              {!bookings || bookings.length === 0 ? (
+              {!orders || orders.length === 0 ? (
                 <p className="text-sm text-slate-500 py-4 text-center">
-                  Belum ada booking
+                  Belum ada order
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {(bookings as BookingWithLead[]).map((booking) => (
+                  {(orders as OrderWithLead[]).map((order) => (
                     <Link
-                      key={booking.id}
-                      href={`/bookings/${booking.id}`}
+                      key={order.id}
+                      href={`/orders/${order.id}`}
                       className="flex items-center justify-between rounded-lg border p-3 hover:bg-slate-50 transition-colors"
                     >
                       <div>
                         <p className="font-medium text-sm">
-                          {booking.event_name || booking.booking_no}
+                          {order.event_name || order.order_no}
                         </p>
                         <p className="text-xs text-slate-500">
-                          {booking.booking_no} · {formatDate(booking.event_date)} · {booking.pax} pax
+                          {order.order_no} · {formatDate(order.event_date)} · {order.pax} pax
                         </p>
                       </div>
                       <Badge
                         variant="outline"
-                        className={BOOKING_STATUS_COLORS[booking.status]}
+                        className={ORDER_STATUS_COLORS[order.status]}
                       >
-                        {booking.status}
+                        {order.status}
                       </Badge>
                     </Link>
                   ))}

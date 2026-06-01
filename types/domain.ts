@@ -3,11 +3,12 @@ import type { Tables, Enums } from './database'
 // ---- Core entity types ----
 export type Role = Tables<'roles'>
 export type User = Tables<'users'>
+export type LoginLog = Tables<'login_logs'>
 export type Lead = Tables<'leads'>
 export type LeadContact = Tables<'lead_contacts'>
 export type Target = Tables<'targets'>
-export type Booking = Tables<'bookings'>
-export type BookingStatusLog = Tables<'booking_status_logs'>
+export type Order = Tables<'orders'>
+export type OrderStatusLog = Tables<'order_status_logs'>
 export type Loa = Tables<'loa'>
 export type LoaItem = Tables<'loa_items'>
 export type Ib = Tables<'ib'>
@@ -20,7 +21,7 @@ export type OverheadLibrary = Tables<'overhead_library'>
 
 // ---- Enum types ----
 export type SegmenEnum = Enums<'segmen_enum'>
-export type BookingStatus = Enums<'booking_status_enum'>
+export type OrderStatus = Enums<'order_status_enum'>
 export type LoaStatus = Enums<'loa_status_enum'>
 export type PaymentStatus = Enums<'payment_status_enum'>
 
@@ -30,9 +31,9 @@ export interface Permissions {
   'leads.view_all'?: boolean
   'leads.edit'?: boolean
   'leads.delete'?: boolean
-  'bookings.create'?: boolean
-  'bookings.view_all'?: boolean
-  'bookings.edit'?: boolean
+  'orders.create'?: boolean
+  'orders.view_all'?: boolean
+  'orders.edit'?: boolean
   'loa.create'?: boolean
   'loa.view_all'?: boolean
   'loa.approve'?: boolean
@@ -57,15 +58,15 @@ export type LeadWithContacts = Lead & {
   users?: Pick<User, 'id' | 'name'> | null
 }
 
-export type BookingWithLead = Booking & {
+export type OrderWithLead = Order & {
   leads: Pick<Lead, 'id' | 'company_name' | 'segmen'>
   users?: Pick<User, 'id' | 'name'> | null
 }
 
-export type BookingWithDetails = Booking & {
+export type OrderWithDetails = Order & {
   leads: LeadWithContacts
   users?: Pick<User, 'id' | 'name'> | null
-  booking_status_logs: BookingStatusLog[]
+  order_status_logs: OrderStatusLog[]
   loa?: Loa | null
 }
 
@@ -75,6 +76,7 @@ export interface AppUser {
   name: string
   email: string
   phone: string | null
+  jabatan: string | null
   signature_url: string | null
   role_id: string
   is_active: boolean

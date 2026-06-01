@@ -1,13 +1,13 @@
-import type { BookingStatus, LoaStatus, PaymentStatus } from '@/types/domain'
+import type { OrderStatus, LoaStatus, PaymentStatus } from '@/types/domain'
 
-export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   Tentative: 'Tentative',
   Definite: 'Definite',
   Actual: 'Actual',
   Cancel: 'Cancel',
 }
 
-export const BOOKING_STATUS_COLORS: Record<BookingStatus, string> = {
+export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   Tentative: 'bg-yellow-100 text-yellow-800',
   Definite: 'bg-blue-100 text-blue-800',
   Actual: 'bg-green-100 text-green-800',
@@ -15,7 +15,7 @@ export const BOOKING_STATUS_COLORS: Record<BookingStatus, string> = {
 }
 
 // Valid status transitions
-export const BOOKING_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   Tentative: ['Definite', 'Cancel'],
   Definite: ['Actual', 'Cancel'],
   Actual: [],

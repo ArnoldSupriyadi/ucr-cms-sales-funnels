@@ -39,9 +39,11 @@ export type Database = {
           name: string
           email: string
           phone: string | null
+          jabatan: string | null
           signature_url: string | null
           role_id: string
           is_active: boolean
+          active_session_key: string | null
           created_at: string
         }
         Insert: {
@@ -49,9 +51,11 @@ export type Database = {
           name: string
           email: string
           phone?: string | null
+          jabatan?: string | null
           signature_url?: string | null
           role_id: string
           is_active?: boolean
+          active_session_key?: string | null
           created_at?: string
         }
         Update: {
@@ -59,9 +63,11 @@ export type Database = {
           name?: string
           email?: string
           phone?: string | null
+          jabatan?: string | null
           signature_url?: string | null
           role_id?: string
           is_active?: boolean
+          active_session_key?: string | null
           created_at?: string
         }
         Relationships: [
@@ -70,6 +76,53 @@ export type Database = {
             columns: ["role_id"]
             isOneToOne: false
             referencedRelation: "roles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      login_logs: {
+        Row: {
+          id: string
+          user_id: string
+          session_key: string
+          ip_address: string | null
+          user_agent: string | null
+          browser: string | null
+          os: string | null
+          logged_in_at: string
+          logged_out_at: string | null
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          session_key: string
+          ip_address?: string | null
+          user_agent?: string | null
+          browser?: string | null
+          os?: string | null
+          logged_in_at?: string
+          logged_out_at?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          session_key?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          browser?: string | null
+          os?: string | null
+          logged_in_at?: string
+          logged_out_at?: string | null
+          is_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "login_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           }
         ]
@@ -194,14 +247,15 @@ export type Database = {
           }
         ]
       }
-      bookings: {
+      orders: {
         Row: {
           id: string
-          booking_no: string
+          order_no: string
           lead_id: string
           sales_id: string | null
-          status: Database['public']['Enums']['booking_status_enum']
+          status: Database['public']['Enums']['order_status_enum']
           event_date: string
+          event_time: string | null
           event_name: string | null
           event_type: string | null
           venue: string | null
@@ -215,11 +269,12 @@ export type Database = {
         }
         Insert: {
           id?: string
-          booking_no: string
+          order_no: string
           lead_id: string
           sales_id?: string | null
-          status?: Database['public']['Enums']['booking_status_enum']
+          status?: Database['public']['Enums']['order_status_enum']
           event_date: string
+          event_time?: string | null
           event_name?: string | null
           event_type?: string | null
           venue?: string | null
@@ -233,11 +288,12 @@ export type Database = {
         }
         Update: {
           id?: string
-          booking_no?: string
+          order_no?: string
           lead_id?: string
           sales_id?: string | null
-          status?: Database['public']['Enums']['booking_status_enum']
+          status?: Database['public']['Enums']['order_status_enum']
           event_date?: string
+          event_time?: string | null
           event_name?: string | null
           event_type?: string | null
           venue?: string | null
@@ -251,14 +307,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "bookings_lead_id_fkey"
+            foreignKeyName: "orders_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "bookings_sales_id_fkey"
+            foreignKeyName: "orders_sales_id_fkey"
             columns: ["sales_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -266,40 +322,40 @@ export type Database = {
           }
         ]
       }
-      booking_status_logs: {
+      order_status_logs: {
         Row: {
           id: string
-          booking_id: string
-          from_status: Database['public']['Enums']['booking_status_enum'] | null
-          to_status: Database['public']['Enums']['booking_status_enum']
+          order_id: string
+          from_status: Database['public']['Enums']['order_status_enum'] | null
+          to_status: Database['public']['Enums']['order_status_enum']
           changed_by: string | null
           note: string | null
           created_at: string
         }
         Insert: {
           id?: string
-          booking_id: string
-          from_status?: Database['public']['Enums']['booking_status_enum'] | null
-          to_status: Database['public']['Enums']['booking_status_enum']
+          order_id: string
+          from_status?: Database['public']['Enums']['order_status_enum'] | null
+          to_status: Database['public']['Enums']['order_status_enum']
           changed_by?: string | null
           note?: string | null
           created_at?: string
         }
         Update: {
           id?: string
-          booking_id?: string
-          from_status?: Database['public']['Enums']['booking_status_enum'] | null
-          to_status?: Database['public']['Enums']['booking_status_enum']
+          order_id?: string
+          from_status?: Database['public']['Enums']['order_status_enum'] | null
+          to_status?: Database['public']['Enums']['order_status_enum']
           changed_by?: string | null
           note?: string | null
           created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "booking_status_logs_booking_id_fkey"
-            columns: ["booking_id"]
+            foreignKeyName: "order_status_logs_order_id_fkey"
+            columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "bookings"
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           }
         ]
@@ -312,6 +368,7 @@ export type Database = {
           revision_no: number
           revision_reason: string | null
           status: Database['public']['Enums']['loa_status_enum']
+          setup_location: string | null
           service_charge_pct: number
           handling_fee_pct: number
           discount: number
@@ -337,6 +394,7 @@ export type Database = {
           revision_no?: number
           revision_reason?: string | null
           status?: Database['public']['Enums']['loa_status_enum']
+          setup_location?: string | null
           service_charge_pct?: number
           handling_fee_pct?: number
           discount?: number
@@ -362,6 +420,7 @@ export type Database = {
           revision_no?: number
           revision_reason?: string | null
           status?: Database['public']['Enums']['loa_status_enum']
+          setup_location?: string | null
           service_charge_pct?: number
           handling_fee_pct?: number
           discount?: number
@@ -385,7 +444,7 @@ export type Database = {
             foreignKeyName: "loa_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: true
-            referencedRelation: "bookings"
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           }
         ]
@@ -689,10 +748,14 @@ export type Database = {
         Row: {
           id: string
           kategori: string
+          sub_kategori: string | null
           nama_paket: string
+          harga_per_pax: number | null
           harga_minimum: number | null
           harga_maksimum: number | null
           satuan: string | null
+          has_selection: boolean
+          is_best_seller: boolean
           ketentuan: string | null
           is_active: boolean
           created_at: string
@@ -700,10 +763,14 @@ export type Database = {
         Insert: {
           id?: string
           kategori: string
+          sub_kategori?: string | null
           nama_paket: string
+          harga_per_pax?: number | null
           harga_minimum?: number | null
           harga_maksimum?: number | null
           satuan?: string | null
+          has_selection?: boolean
+          is_best_seller?: boolean
           ketentuan?: string | null
           is_active?: boolean
           created_at?: string
@@ -711,15 +778,159 @@ export type Database = {
         Update: {
           id?: string
           kategori?: string
+          sub_kategori?: string | null
           nama_paket?: string
+          harga_per_pax?: number | null
           harga_minimum?: number | null
           harga_maksimum?: number | null
           satuan?: string | null
+          has_selection?: boolean
+          is_best_seller?: boolean
           ketentuan?: string | null
           is_active?: boolean
           created_at?: string
         }
         Relationships: []
+      }
+      menu_package_components: {
+        Row: {
+          id: string
+          package_id: string
+          component_type: string
+          nama: string
+          qty: number
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          package_id: string
+          component_type: string
+          nama: string
+          qty?: number
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          package_id?: string
+          component_type?: string
+          nama?: string
+          qty?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_package_components_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "menu_packages"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      menu_catalog_categories: {
+        Row: {
+          id: string
+          component_type: string
+          nama: string
+          selection_rule: string
+          parent_id: string | null
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          component_type: string
+          nama: string
+          selection_rule?: string
+          parent_id?: string | null
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          component_type?: string
+          nama?: string
+          selection_rule?: string
+          parent_id?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_catalog_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "menu_catalog_categories"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      menu_catalog_items: {
+        Row: {
+          id: string
+          category_id: string
+          nama: string
+          is_active: boolean
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          category_id: string
+          nama: string
+          is_active?: boolean
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          category_id?: string
+          nama?: string
+          is_active?: boolean
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_catalog_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_catalog_categories"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      loa_item_selections: {
+        Row: {
+          id: string
+          loa_item_id: string
+          component_name: string
+          occasion_no: number
+          category_name: string
+          item_name: string
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          loa_item_id: string
+          component_name: string
+          occasion_no?: number
+          category_name: string
+          item_name: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          loa_item_id?: string
+          component_name?: string
+          occasion_no?: number
+          category_name?: string
+          item_name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loa_item_selections_loa_item_id_fkey"
+            columns: ["loa_item_id"]
+            isOneToOne: false
+            referencedRelation: "loa_items"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       overhead_library: {
         Row: {
@@ -762,7 +973,7 @@ export type Database = {
     }
     Enums: {
       segmen_enum: 'Wedding' | 'Private' | 'Corporate' | 'BUMN' | 'Government'
-      booking_status_enum: 'Tentative' | 'Definite' | 'Actual' | 'Cancel'
+      order_status_enum: 'Tentative' | 'Definite' | 'Actual' | 'Cancel'
       loa_status_enum: 'draft' | 'pending_approval' | 'approved' | 'sent' | 'final' | 'revised'
       payment_status_enum: 'unpaid' | 'partial' | 'paid'
     }

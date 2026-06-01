@@ -16,8 +16,8 @@ import type { AppUser } from '@/types/domain'
 
 const navItems = [
   {
-    href: '/bookings',
-    label: 'Bookings',
+    href: '/orders',
+    label: 'Orders',
     icon: CalendarDays,
     permission: null,
   },
@@ -108,7 +108,10 @@ export function Sidebar({ user }: SidebarProps) {
 
       {/* User info */}
       <div className="border-t border-white/10 p-3">
-        <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-white/5 transition-colors">
+        <Link
+          href="/settings/profile"
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-white/5 transition-colors"
+        >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30">
             {user.name.charAt(0).toUpperCase()}
           </div>
@@ -116,7 +119,7 @@ export function Sidebar({ user }: SidebarProps) {
             <p className="truncate text-sm font-semibold text-white">{user.name}</p>
             <p className="truncate text-[11px] text-slate-400">{user.role.name}</p>
           </div>
-        </div>
+        </Link>
       </div>
     </aside>
   )
