@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -8,7 +8,7 @@ import { createSession } from '@/features/auth/actions'
 import { toast } from 'sonner'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,26 +37,9 @@ export default function LoginPage() {
       const msg = error.message.toLowerCase()
 
       if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
-        // Cek apakah email terdaftar di tabel users
-        const { data: userRow } = await supabase
-          .from('users')
-          .select('is_active')
-          .eq('email', email)
-          .maybeSingle()
-
-        if (!userRow) {
-          toast.error('Email tidak terdaftar', {
-            description: 'Akun dengan email ini tidak ditemukan. Hubungi Super Admin.',
-          })
-        } else if (!userRow.is_active) {
-          toast.error('Akun dinonaktifkan', {
-            description: 'Akun kamu sudah tidak aktif. Hubungi Super Admin.',
-          })
-        } else {
-          toast.error('Password salah', {
-            description: 'Password yang kamu masukkan tidak sesuai.',
-          })
-        }
+        toast.error('Login gagal', {
+          description: 'Email atau password yang kamu masukkan salah.',
+        })
       } else if (msg.includes('email not confirmed')) {
         toast.error('Email belum diverifikasi', {
           description: 'Silakan verifikasi email kamu terlebih dahulu.',
@@ -93,9 +76,33 @@ export default function LoginPage() {
       return
     }
 
-    await createSession()
-    router.push('/orders')
-    router.refresh()
+    try {
+      let result
+      if (data?.session) {
+        result = await createSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        })
+      } else {
+        result = await createSession()
+      }
+
+      if (result && !result.success) {
+        toast.error('Gagal membuat sesi', {
+          description: result.error,
+        })
+        setLoading(false)
+        return
+      }
+
+      router.push('/orders')
+      router.refresh()
+    } catch (err: any) {
+      toast.error('Gagal membuat sesi', {
+        description: err.message || 'Terjadi kesalahan sistem saat masuk.',
+      })
+      setLoading(false)
+    }
   }
 
   return (
@@ -245,5 +252,20 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-[oklch(0.975_0.005_264)]">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+          <p className="text-sm text-slate-500">Memuat halaman masuk...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
