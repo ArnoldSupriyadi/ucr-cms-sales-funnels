@@ -39,6 +39,7 @@ export function LeadsClient({ leads, canCreate, canEdit, canDelete }: LeadsClien
       <LeadTable
         leads={leads}
         canCreate={canCreate}
+        canEdit={canEdit}
         canDelete={canDelete}
         selectedLeadId={selectedLeadId}
         onSelectLead={setSelectedLeadId}

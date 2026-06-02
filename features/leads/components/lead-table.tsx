@@ -34,6 +34,7 @@ const PAGE_SIZE = 10
 interface LeadTableProps {
   leads: LeadWithContacts[]
   canCreate: boolean
+  canEdit: boolean
   canDelete: boolean
   selectedLeadId: string | null
   onSelectLead: (id: string) => void
@@ -44,6 +45,7 @@ interface LeadTableProps {
 export function LeadTable({
   leads,
   canCreate,
+  canEdit,
   canDelete,
   selectedLeadId,
   onSelectLead,
@@ -242,15 +244,17 @@ export function LeadTable({
                         className="flex items-center justify-end gap-1"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-gray-400 hover:text-blue-600"
-                          onClick={() => onEditLead(lead)}
-                          title="Edit lead"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
+                        {canEdit && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-gray-400 hover:text-blue-600"
+                            onClick={() => onEditLead(lead)}
+                            title="Edit lead"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                         {canDelete && (
                           <Button
                             size="icon"
