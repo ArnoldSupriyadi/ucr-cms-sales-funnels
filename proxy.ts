@@ -27,6 +27,9 @@ export async function proxy(request: NextRequest) {
     }
   )
 
+  // Server Actions (Next-Action header) hanya perlu session refresh, tidak perlu cek ucr-sk
+  const isServerAction = request.headers.has('next-action')
+
   // 1. Cek autentikasi Supabase
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -34,7 +37,8 @@ export async function proxy(request: NextRequest) {
 
   // 2. Public routes
   if (pathname.startsWith('/login') || pathname.startsWith('/api/loa/approve')) {
-    if (user && pathname === '/login') {
+    // Jangan redirect Server Action — biarkan createSession/clearSession jalan
+    if (!isServerAction && user && pathname === '/login') {
       return NextResponse.redirect(new URL('/orders', request.url))
     }
     return supabaseResponse
@@ -50,7 +54,8 @@ export async function proxy(request: NextRequest) {
 
   if (!cookieSessionKey) {
     // Tidak ada session key cookie → session tidak valid
-    await supabase.auth.signOut()
+    // scope: 'local' — hanya revoke session ini, bukan semua session user
+    await supabase.auth.signOut({ scope: 'local' })
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('reason', 'session_expired')
     return NextResponse.redirect(redirectUrl)
@@ -65,7 +70,7 @@ export async function proxy(request: NextRequest) {
 
   if (!userData?.is_active) {
     // Akun dinonaktifkan
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'local' })
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('reason', 'account_disabled')
     return NextResponse.redirect(redirectUrl)
@@ -73,7 +78,7 @@ export async function proxy(request: NextRequest) {
 
   if (userData?.active_session_key !== cookieSessionKey) {
     // Session key tidak cocok → ada login baru dari device lain
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'local' })
     const response = NextResponse.redirect(new URL('/login', request.url))
     // Hapus cookie lama
     response.cookies.delete(SESSION_COOKIE)

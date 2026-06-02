@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -27,6 +28,7 @@ export default function RootLayout({
     >
       <body className={`${nunito.className} min-h-full flex flex-col`} suppressHydrationWarning>
         {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

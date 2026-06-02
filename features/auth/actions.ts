@@ -14,28 +14,14 @@ export async function createSession(tokens?: {
   try {
     const supabase = await createClient()
 
-    // Jika ada token, verifikasi langsung via JWT (tanpa setSession)
-    // setSession tidak bekerja di Server Action karena tidak bisa menulis cookie
-    // ke browser di tengah-tengah request yang sedang berjalan.
-    let user: { id: string; email?: string } | null = null
-
-    if (tokens?.access_token) {
-      const { data, error: jwtErr } = await supabase.auth.getUser(tokens.access_token)
-      if (jwtErr) {
-        throw new Error(`Token tidak valid: ${jwtErr.message}`)
-      }
-      user = data.user
-    } else {
-      const { data, error: cookieErr } = await supabase.auth.getUser()
-      if (cookieErr) {
-        throw new Error(`Gagal membaca sesi dari cookie: ${cookieErr.message}`)
-      }
-      user = data.user
+    // Baca sesi dari cookie Supabase yang dikirim browser setelah signInWithPassword.
+    // Tidak menggunakan getUser(jwt) karena proxy bisa memanggil signOut() sebelum
+    // Server Action ini jalan, menyebabkan session_id di JWT sudah tidak aktif.
+    const { data, error: sessionErr } = await supabase.auth.getUser()
+    if (sessionErr || !data.user) {
+      throw new Error('Sesi tidak ditemukan. Silakan login ulang.')
     }
-
-    if (!user) {
-      throw new Error('Sesi pengguna tidak ditemukan.')
-    }
+    const user = data.user
 
     const headersList = await headers()
     const userAgent = headersList.get('user-agent') ?? ''
