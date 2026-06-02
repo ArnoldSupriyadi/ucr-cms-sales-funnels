@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { LeadTable } from './lead-table'
 import { LeadModal } from './lead-modal'
 import { LeadSidePanel } from './lead-side-panel'
@@ -17,6 +17,11 @@ export function LeadsClient({ leads, canCreate, canEdit, canDelete }: LeadsClien
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null)
   const [editingLead, setEditingLead] = useState<Lead | null>(null)
+
+  const lineBusinessSuggestions = useMemo(() =>
+    [...new Set(leads.map((l) => l.line_business).filter(Boolean) as string[])].sort(),
+    [leads]
+  )
 
   function openCreateModal() {
     setEditingLead(null)
@@ -51,6 +56,7 @@ export function LeadsClient({ leads, canCreate, canEdit, canDelete }: LeadsClien
         <LeadModal
           mode={modalMode}
           lead={editingLead ?? undefined}
+          lineBusinessSuggestions={lineBusinessSuggestions}
           onClose={closeModal}
           onSuccess={closeModal}
         />

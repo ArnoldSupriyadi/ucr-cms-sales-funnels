@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Search, Plus, Pencil, Trash2, Building2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, Building2, ChevronLeft, ChevronRight, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,7 +29,7 @@ import { formatDate } from '@/lib/utils/format'
 import { deleteLead } from '../actions'
 import type { Lead, LeadWithContacts } from '@/types/domain'
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 20
 
 interface LeadTableProps {
   leads: LeadWithContacts[]
@@ -193,7 +193,7 @@ export function LeadTable({
                   <tr
                     key={lead.id}
                     onClick={() => onSelectLead(lead.id)}
-                    className={`cursor-pointer transition-colors hover:bg-blue-50/50 ${isSelected ? 'bg-blue-50' : ''}`}
+                    className={`cursor-pointer transition-colors hover:bg-blue-100 ${isSelected ? 'bg-blue-100 border-l-2 border-l-blue-500' : 'border-l-2 border-l-transparent'}`}
                   >
                     <td className="px-5 py-3.5">
                       <p className="font-semibold text-gray-800">{lead.company_name}</p>
@@ -245,6 +245,16 @@ export function LeadTable({
                         className="flex items-center justify-end gap-1"
                         onClick={(e) => e.stopPropagation()}
                       >
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1.5 px-2.5 text-xs text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+                          onClick={() => onSelectLead(lead.id)}
+                          title="Lihat detail dan kontak lead"
+                        >
+                          <Users className="h-3 w-3" />
+                          Lihat Kontak
+                        </Button>
                         {canEdit && (
                           <Button
                             size="icon"

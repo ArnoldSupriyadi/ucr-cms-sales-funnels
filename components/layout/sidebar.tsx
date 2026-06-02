@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
@@ -11,7 +12,6 @@ import {
   Target,
   Database,
   Settings,
-  ChefHat,
 } from 'lucide-react'
 import type { AppUser, Permissions } from '@/types/domain'
 
@@ -53,14 +53,14 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside className="flex h-full w-[260px] shrink-0 flex-col border-r border-gray-200 bg-white">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 border-b border-gray-100 px-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 shadow-md shadow-indigo-500/30">
-          <ChefHat className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-gray-900 tracking-wide">Umara</p>
-          <p className="text-[10px] text-gray-400 -mt-0.5">Sales Funnel</p>
-        </div>
+      <div className="flex h-20 items-center justify-center border-b border-gray-100 px-5">
+        <Image
+          src="/logo-umara.png"
+          alt="PT Umara Cipta Rasa"
+          width={72}
+          height={72}
+          className="h-[72px] w-[72px] rounded-xl object-contain"
+        />
       </div>
 
       {/* Nav */}

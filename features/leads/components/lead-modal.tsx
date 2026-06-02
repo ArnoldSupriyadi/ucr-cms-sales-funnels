@@ -29,17 +29,23 @@ import type { Lead } from '@/types/domain'
 interface LeadModalProps {
   mode: 'create' | 'edit'
   lead?: Lead
+  lineBusinessSuggestions?: string[]
   onClose: () => void
   onSuccess: () => void
 }
 
-export function LeadModal({ mode, lead, onClose, onSuccess }: LeadModalProps) {
+export function LeadModal({ mode, lead, lineBusinessSuggestions = [], onClose, onSuccess }: LeadModalProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [companyName, setCompanyName] = useState(lead?.company_name ?? '')
   const [segmen, setSegmen] = useState(lead?.segmen ?? '')
   const [lineBusiness, setLineBusiness] = useState(lead?.line_business ?? '')
   const [address, setAddress] = useState(lead?.address ?? '')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  const filteredSuggestions = lineBusinessSuggestions.filter(
+    (s) => s.toLowerCase().includes(lineBusiness.toLowerCase()) && s !== lineBusiness
+  ).slice(0, 6)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -96,7 +102,7 @@ export function LeadModal({ mode, lead, onClose, onSuccess }: LeadModalProps) {
           <div className="space-y-1.5">
             <Label>Segmen</Label>
             <Select value={segmen} onValueChange={setSegmen} disabled={loading}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih segmen" />
               </SelectTrigger>
               <SelectContent>
@@ -109,15 +115,35 @@ export function LeadModal({ mode, lead, onClose, onSuccess }: LeadModalProps) {
             </Select>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="relative space-y-1.5">
             <Label htmlFor="line_business">Industri / Line of Business</Label>
             <Input
               id="line_business"
               value={lineBusiness}
-              onChange={(e) => setLineBusiness(e.target.value)}
-              placeholder="Banking, Oil & Gas, FMCG, dll"
+              onChange={(e) => { setLineBusiness(e.target.value); setShowSuggestions(true) }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              placeholder="Ketik industri, misal: Banking, FMCG..."
               disabled={loading}
+              autoComplete="off"
             />
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <div className="absolute z-50 w-full rounded-md border border-gray-200 bg-white shadow-md">
+                <p className="border-b border-gray-100 px-3 py-1.5 text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                  Pilih atau ketik baru
+                </p>
+                {filteredSuggestions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onMouseDown={() => { setLineBusiness(s); setShowSuggestions(false) }}
+                    className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">
