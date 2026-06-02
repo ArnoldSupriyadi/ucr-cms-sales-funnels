@@ -95,7 +95,7 @@ function LoginForm() {
         return
       }
 
-      router.push('/orders')
+      router.push('/dashboard')
       router.refresh()
     } catch (err: any) {
       toast.error('Gagal membuat sesi', {

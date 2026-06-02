@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/login') || pathname.startsWith('/api/loa/approve')) {
     // Jangan redirect Server Action — biarkan createSession/clearSession jalan
     if (!isServerAction && user && pathname === '/login') {
-      return NextResponse.redirect(new URL('/orders', request.url))
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
     return supabaseResponse
   }
