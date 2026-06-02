@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getAppUser } from '@/lib/auth/permissions'
 import { KpiCards } from '@/features/dashboard/components/kpi-cards'
@@ -6,7 +7,7 @@ import type { OrderStatus } from '@/types/domain'
 
 export default async function DashboardPage() {
   const [supabase, user] = await Promise.all([createClient(), getAppUser()])
-  if (!user) return null
+  if (!user) redirect('/login')
 
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()

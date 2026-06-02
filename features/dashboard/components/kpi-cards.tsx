@@ -1,3 +1,4 @@
+import type { ElementType } from 'react'
 import { Users, CalendarDays, TrendingUp, UserPlus } from 'lucide-react'
 
 interface KpiCardsProps {
@@ -10,7 +11,7 @@ interface KpiCardsProps {
 interface KpiCardProps {
   label: string
   value: number
-  icon: React.ElementType
+  icon: ElementType
   iconBg: string
   iconColor: string
 }
