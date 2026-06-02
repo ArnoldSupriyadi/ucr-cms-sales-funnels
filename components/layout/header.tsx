@@ -14,6 +14,7 @@ import { LogOut, ChevronDown } from 'lucide-react'
 import type { AppUser } from '@/types/domain'
 
 const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Dashboard',
   '/orders': 'Orders',
   '/leads': 'Leads',
   '/reports': 'Reports',
