@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LogOut, ChevronDown } from 'lucide-react'
+import { LogOut, ChevronDown, Menu } from 'lucide-react'
 import type { AppUser } from '@/types/domain'
 
 const PAGE_TITLES: Record<string, string> = {
@@ -25,9 +25,10 @@ const PAGE_TITLES: Record<string, string> = {
 
 interface HeaderProps {
   user: AppUser
+  onToggleSidebar?: () => void
 }
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, onToggleSidebar }: HeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
 
@@ -42,10 +43,21 @@ export function Header({ user }: HeaderProps) {
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-sm px-6">
-      <div>
+    <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 backdrop-blur-sm px-4 sm:px-6">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {onToggleSidebar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebar}
+            className="h-9 w-9 shrink-0 hover:bg-slate-100"
+            title="Toggle sidebar"
+          >
+            <Menu className="h-5 w-5 text-slate-600" />
+          </Button>
+        )}
         {title && (
-          <h1 className="text-lg font-bold text-slate-800">{title}</h1>
+          <h1 className="text-base sm:text-lg font-bold text-slate-800 truncate">{title}</h1>
         )}
       </div>
 
@@ -54,7 +66,7 @@ export function Header({ user }: HeaderProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 rounded-xl h-9 px-3 hover:bg-slate-100 border border-slate-200"
+            className="gap-2 rounded-xl h-9 px-2 sm:px-3 hover:bg-slate-100 border border-slate-200 shrink-0"
           >
             <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 text-xs font-bold">
               {user.name.charAt(0).toUpperCase()}
@@ -69,7 +81,7 @@ export function Header({ user }: HeaderProps) {
         <DropdownMenuContent align="end" className="w-52 rounded-xl">
           <div className="px-3 py-2.5">
             <p className="text-sm font-semibold text-slate-800">{user.name}</p>
-            <p className="text-xs text-slate-500">{user.email}</p>
+            <p className="text-xs text-slate-500 truncate">{user.email}</p>
             <span className="mt-1 inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 ring-1 ring-indigo-200/60">
               {user.role.name}
             </span>
