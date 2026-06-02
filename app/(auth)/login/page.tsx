@@ -60,22 +60,7 @@ function LoginForm() {
       return
     }
 
-    // Cek is_active sebelum createSession (double-check setelah auth berhasil)
-    const { data: userRow } = await supabase
-      .from('users')
-      .select('is_active')
-      .eq('id', data.user.id)
-      .maybeSingle()
-
-    if (!userRow?.is_active) {
-      await supabase.auth.signOut()
-      toast.error('Akun dinonaktifkan', {
-        description: 'Akun kamu sudah tidak aktif. Hubungi Super Admin.',
-      })
-      setLoading(false)
-      return
-    }
-
+    // is_active dicek di proxy dan getAppUser — tidak perlu round trip ekstra di client
     try {
       let result
       if (data?.session) {

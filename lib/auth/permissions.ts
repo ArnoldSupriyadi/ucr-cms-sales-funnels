@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import type { AppUser, Permissions } from '@/types/domain'
 import { createClient } from '@/lib/supabase/server'
 
@@ -8,20 +9,13 @@ export function checkPermission(
   return user.permissions[permission] === true
 }
 
-export async function getAppUser(): Promise<AppUser | null> {
+// Di-cache dalam satu request — Layout dan Page tidak akan duplikasi query
+// React `cache()` dedupe pemanggilan dalam request scope yang sama
+export const getAppUser = cache(async (): Promise<AppUser | null> => {
   const supabase = await createClient()
-  const { data: { user }, error: userErr } = await supabase.auth.getUser()
-  
-  if (userErr) {
-    console.error('getAppUser: Error getting auth user:', userErr.message)
-  }
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    console.log('getAppUser: No authenticated user found in session cookies.')
-    return null
-  }
-
-  console.log('getAppUser: Found authenticated user:', user.email, 'ID:', user.id)
+  if (!user) return null
 
   const { data, error } = await supabase
     .from('users')
@@ -29,26 +23,11 @@ export async function getAppUser(): Promise<AppUser | null> {
     .eq('id', user.id)
     .single()
 
-  if (error) {
-    console.error('getAppUser: Error querying public.users table:', error.message)
-    return null
-  }
-
-  if (!data) {
-    console.warn('getAppUser: User record not found in public.users table for ID:', user.id)
-    return null
-  }
-
-  if (!data.is_active) {
-    console.warn('getAppUser: User record is marked as inactive:', user.email)
-    return null
-  }
-
-  console.log('getAppUser: Successfully retrieved active user profile with role:', data.roles?.name)
+  if (error || !data || !data.is_active) return null
 
   return {
     ...data,
     role: data.roles as AppUser['role'],
     permissions: (data.roles?.permissions ?? {}) as Permissions,
   }
-}
+})
