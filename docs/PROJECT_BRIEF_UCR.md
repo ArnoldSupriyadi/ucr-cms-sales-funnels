@@ -11,6 +11,16 @@
 
 ---
 
+> ## ⚠️ Catatan Terminologi — "Order" vs "booking"
+>
+> Entitas event/pemesanan disebut **"Order"** di UI dan bahasa bisnis (hasil rename Bulan 2), tapi di **database tetap bernama tabel `bookings`**. Semua identifier teknis tidak ikut berubah: tabel `bookings`, kolom `booking_no`, tabel `booking_status_logs`, FK `booking_id`, dan format nomor `BK-2025-001`.
+>
+> **Aturan baca dokumen ini:** kata **"Order"** = konsep bisnis; `bookings`/`booking_*` (dalam format kode) = nama asli di schema. Keduanya merujuk entitas yang sama.
+>
+> Alur produk: **Lead → Order → LoA → (IB + BEO)**. Satu Order menghasilkan satu LoA (1:1).
+
+---
+
 ## 1. Latar Belakang & Tujuan
 
 Umara Catering adalah perusahaan jasa katering event (Coffee Break, Buffet, Fullday Meeting, Nasi Box, dll). Revenue dari event/booking, bukan penjualan produk satuan. Tim sales saat ini mengelola pipeline secara manual.
@@ -60,14 +70,14 @@ Sub Total 2 + PB1 10% + Handling Fee 15%
 ```
 
 **Aturan penting:**
-- Revenue diakui saat status booking = **Actual** (event sudah terjadi), bukan saat pembayaran
+- Revenue diakui saat status Order = **Actual** (event sudah terjadi), bukan saat pembayaran
 - Tidak ada sistem deposit — hanya pelunasan + invoice
 - Cancel = nilai Rp 0, tidak ada cancellation fee sebagai revenue
 - PB1 (pajak 10%) — ada di kalkulasi tapi disesuaikan manual oleh Arnold
 
 ---
 
-## 4. Booking Status Flow
+## 4. Order Status Flow (DB: tabel `bookings`)
 
 ```
 TENTATIVE → DEFINITE → ACTUAL (happy path, terminal)
@@ -103,7 +113,7 @@ TENTATIVE → DEFINITE → ACTUAL (happy path, terminal)
 | **Super Admin** | Full access, kelola roles & permissions via UI |
 | **GM** | Approve LoA, set target, lihat semua report |
 | **Cost Controller** | Buat IB saja (setelah LoA Final), lihat report |
-| **Sales** | Buat leads/booking/LoA/BEO, lihat data milik sendiri + report |
+| **Sales** | Buat leads/Order/LoA/BEO, lihat data milik sendiri + report |
 
 **Catatan implementasi:**
 - Super Admin bisa tambah custom role baru via UI dengan checkbox permissions
@@ -114,7 +124,7 @@ TENTATIVE → DEFINITE → ACTUAL (happy path, terminal)
 
 ## 7. Tiga Dokumen Utama
 
-Semua tiga dokumen menyimpan **version history lengkap** via kolom `revision_no`. Versi aktif = `MAX(revision_no)` untuk booking tersebut. Versi lama read-only untuk audit trail.
+Semua tiga dokumen menyimpan **version history lengkap** via kolom `revision_no`. Versi aktif = `MAX(revision_no)` untuk Order tersebut. Versi lama read-only untuk audit trail.
 
 ---
 
@@ -162,7 +172,7 @@ draft → pending_approval → approved/rejected → sent → final → (revised
 
 **Dibuat oleh:** Cost Controller SAJA  
 **Trigger:** Hanya bisa dibuat setelah `loa.status = 'final'`  
-**Tujuan:** Internal P&L per booking — bukan untuk klien
+**Tujuan:** Internal P&L per Order — bukan untuk klien
 
 **Struktur IB:**
 
@@ -221,7 +231,7 @@ Projected GP% = ...
 
 **Edge Case — BEO Darurat:**
 - Flag `is_emergency = true`
-- Diterbitkan sebelum booking mencapai Tentative (kebutuhan mendadak di lapangan)
+- Diterbitkan sebelum Order mencapai Tentative (kebutuhan mendadak di lapangan)
 - UI menampilkan banner peringatan ke tim Operasional
 - Operasional **wajib reconfirm** sebelum eksekusi
 - Flag tetap tersimpan untuk audit trail (tidak dihapus setelah reconfirm)
@@ -297,7 +307,7 @@ Projected GP% = ...
 | segmen | enum | NULLABLE | Jika diisi = target spesifik segmen |
 | set_by | uuid | FK → users.id | GM yang set target |
 
-### 8.6 `bookings`
+### 8.6 `bookings` (UI: **Order**)
 | Field | Type | Constraint | Keterangan |
 |-------|------|-----------|-----------|
 | id | uuid | PK | |
@@ -332,7 +342,7 @@ Projected GP% = ...
 | Field | Type | Constraint | Keterangan |
 |-------|------|-----------|-----------|
 | id | uuid | PK | |
-| booking_id | uuid | FK → bookings.id, UNIQUE | 1:1 dengan booking |
+| booking_id | uuid | FK → bookings.id, UNIQUE | 1:1 dengan Order |
 | doc_no | varchar(50) | NOT NULL | Nomor dokumen LoA |
 | revision_no | smallint | DEFAULT 0 | 0 = original, naik setiap revisi |
 | revision_reason | text | NULLABLE | Wajib diisi jika revision_no > 0 |
@@ -480,8 +490,8 @@ Projected GP% = ...
 | From | To | Cardinality | Keterangan |
 |------|----|------------|-----------|
 | leads | lead_contacts | 1 : N | Unlimited PIC per lead |
-| leads | bookings | 1 : N | Satu klien bisa banyak booking |
-| bookings | loa | 1 : 1 | Satu booking = satu LoA |
+| leads | bookings | 1 : N | Satu klien bisa banyak Order |
+| bookings | loa | 1 : 1 | Satu Order = satu LoA |
 | loa | loa_items | 1 : N | LoA bisa banyak line item |
 | loa | ib | 1 : 1 | Satu LoA = satu IB |
 | loa | beo | 1 : 1 | Satu LoA = satu BEO |
@@ -498,7 +508,7 @@ Projected GP% = ...
 6 tab interaktif. Filter global: per bulan, per sales, per segmen.
 
 ### Tab 1 — P&L (Profit & Loss)
-- Kolom: Booking, Klien, Sales, Event Date, Pax, Net Revenue, Food Cost, Overhead, GP, GP%
+- Kolom: Order, Klien, Sales, Event Date, Pax, Net Revenue, Food Cost, Overhead, GP, GP%
 - Row total di bawah
 - Chart: Bar chart Net Revenue vs COGS per bulan
 - Export: Excel + PDF
@@ -511,14 +521,14 @@ Projected GP% = ...
 
 ### Tab 3 — Top Sales
 - Ranking sales berdasarkan total revenue Actual
-- Kolom: Rank, Sales, Jumlah Booking, Total Revenue, GP Total, Rata-rata GP%
+- Kolom: Rank, Sales, Jumlah Order, Total Revenue, GP Total, Rata-rata GP%
 - Chart: Bar chart per sales
 
 ### Tab 4 — MTD (Month to Date)
 - Progress bulan berjalan vs target
 - Kolom: Sales, Target (share), Actual MTD, % Achievement, Sisa
 - Chart: Gauge / progress bar per sales
-- Update real-time saat booking berubah ke Actual
+- Update real-time saat Order berubah ke Actual
 
 ### Tab 5 — Variance
 - Perbandingan plan (Definite) vs actual (Actual) per bulan
@@ -544,7 +554,7 @@ Semua aturan ini wajib di-enforce di level API/server-action, bukan hanya UI.
 6. **Approval token** — `crypto.randomBytes(32).toString('hex')`, one-time use, invalidate setelah klik atau expired
 7. **Signature stamp pdf-lib** — overlay `users.signature_url` + nama + jabatan + timestamp ke LoA PDF setelah approved. Simpan ke Supabase Storage
 8. **BEO Darurat** — `is_emergency = true` → banner warning di UI Ops. Flag tidak dihapus setelah reconfirm
-9. **Booking status transitions** — hanya enforce: tentative→definite, definite→actual, tentative/definite→cancel. Log semua ke `booking_status_logs`
+9. **Order status transitions** — hanya enforce: tentative→definite, definite→actual, tentative/definite→cancel. Log semua ke `booking_status_logs`
 10. **lead_contacts primary** — partial unique index: `CREATE UNIQUE INDEX ON lead_contacts (lead_id) WHERE is_primary = true`. Toggle di UI harus auto-unset previous primary
 11. **LoA/BEO PIC prefill** — ambil dari `lead_contacts WHERE is_primary = true` untuk default PIC
 12. **Supabase RLS** — Sales: `WHERE sales_id = auth.uid()`. GM + Super Admin: lihat semua. Cost Controller: read LoA, write IB

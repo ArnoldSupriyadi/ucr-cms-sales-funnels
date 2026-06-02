@@ -117,11 +117,12 @@ ucr-sales-funnel/
 │   │   │   │       ├── page.tsx        # Detail lead + contacts
 │   │   │   │       └── edit/page.tsx
 │   │   │   │
-│   │   │   ├── bookings/
+│   │   │   ├── orders/                 # DB: tabel `bookings`
 │   │   │   │   ├── page.tsx            # Pipeline view
 │   │   │   │   ├── new/page.tsx
 │   │   │   │   └── [id]/
 │   │   │   │       ├── page.tsx        # Detail + status timeline
+│   │   │   │       ├── edit/page.tsx
 │   │   │   │       ├── loa/page.tsx
 │   │   │   │       ├── ib/page.tsx     # CC only
 │   │   │   │       └── beo/page.tsx
@@ -151,7 +152,7 @@ ucr-sales-funnel/
 │   │   │       └── send/route.ts       # WA/Telegram
 │   │   │
 │   │   ├── layout.tsx
-│   │   └── page.tsx                    # Redirect ke /login atau /bookings
+│   │   └── page.tsx                    # Redirect ke /login atau /orders
 │   │
 │   ├── components/
 │   │   ├── ui/                         # shadcn/ui components (auto-generated)
@@ -169,9 +170,9 @@ ucr-sales-funnel/
 │   │   │   ├── components/             # LeadForm, LeadTable, ContactCard
 │   │   │   ├── hooks/                  # useLeads, useLead, useLeadContacts
 │   │   │   └── actions.ts              # Server Actions
-│   │   ├── bookings/
-│   │   │   ├── components/             # BookingForm, StatusTimeline, PipelineCard
-│   │   │   ├── hooks/
+│   │   ├── orders/                     # DB: tabel `bookings`
+│   │   │   ├── components/             # OrderForm, StatusTimeline, PipelineCard
+│   │   │   ├── hooks/                  # useOrders
 │   │   │   └── actions.ts
 │   │   ├── loa/
 │   │   │   ├── components/             # LoaForm, LoaPreview, ApprovalBanner
@@ -204,11 +205,11 @@ ucr-sales-funnel/
 │   │   │   └── whatsapp.ts             # WA Business API / Telegram Bot
 │   │   ├── utils/
 │   │   │   ├── format.ts               # formatRupiah, formatDate
-│   │   │   ├── booking-no.ts           # Generate UCR-YYYYMM-XXX
+│   │   │   ├── order-no.ts             # Generate UCR-YYYYMM-XXX (nomor Order)
 │   │   │   └── cn.ts                   # clsx + tailwind-merge
 │   │   └── constants/
 │   │       ├── segmen.ts               # ['Wedding','Private','Corporate','BUMN','Government']
-│   │       └── status.ts               # Booking/LoA status colors & labels
+│   │       └── status.ts               # Order/LoA status colors & labels
 │   │
 │   ├── types/
 │   │   ├── database.ts                 # Auto-generated dari Supabase
@@ -240,11 +241,11 @@ ucr-sales-funnel/
 - [ ] Halaman login (Supabase Auth email/password)
 - [ ] Role guard: cek permissions di middleware
 
-### Bulan 2 — Core Data: Leads & Bookings
-- [ ] CRUD Leads + Lead Contacts
-- [ ] CRUD Bookings + status change flow
-- [ ] Booking status timeline component
-- [ ] Generate booking_no otomatis (UCR-YYYYMM-XXX)
+### Bulan 2 — Core Data: Leads & Orders (DB: tabel `bookings`)
+- [x] CRUD Leads + Lead Contacts
+- [x] CRUD Orders + status change flow
+- [x] Order status timeline component
+- [x] Generate booking_no otomatis (UCR-YYYYMM-XXX) — util `lib/utils/order-no.ts`
 - [ ] RLS test: sales hanya lihat lead sendiri
 
 ### Bulan 3 — Dokumen: LoA
