@@ -253,7 +253,7 @@ export function LeadTable({
                           title="Lihat detail dan kontak lead"
                         >
                           <Users className="h-3 w-3" />
-                          Lihat Kontak
+                          Lihat Kontak ({lead.lead_contacts?.length ?? 0})
                         </Button>
                         {canEdit && (
                           <Button
