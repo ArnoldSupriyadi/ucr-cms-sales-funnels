@@ -72,7 +72,7 @@ Catat semua bug yang ditemukan di project ini. Setiap bug punya status, root cau
 - **Status:** 🟢 Resolved
 - **Area:** Database
 - **Gejala:** Terminal error: `Could not find the table 'public.login_logs' in the schema cache`.
-- **Root Cause:** Database pernah di-reset (`reset_database.sql`) tapi `migration_001_init.sql` tidak dijalankan ulang secara lengkap. Tabel `login_logs` tidak terbuat.
+- **Root Cause:** Database pernah di-reset (`db/reset_database.sql`) tapi `db/migrations/001_init.sql` tidak dijalankan ulang secara lengkap. Tabel `login_logs` tidak terbuat.
 - **Fix:** Jalankan SQL berikut di Supabase SQL Editor:
   ```sql
   CREATE TABLE IF NOT EXISTS login_logs (

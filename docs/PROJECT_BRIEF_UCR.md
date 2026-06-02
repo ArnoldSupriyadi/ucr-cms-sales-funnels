@@ -248,7 +248,7 @@ Projected GP% = ...
 - Semua PK: `uuid` (generated via `gen_random_uuid()`)
 - Semua tabel ada `created_at timestamptz DEFAULT now()`
 - Gunakan Supabase RLS untuk enforce akses per role
-- Migration file: `docs/migration_001_init.sql` (sudah include enum, tabel, indexes, RLS, default roles, auth trigger)
+- Migration file: `db/migrations/001_init.sql` (sudah include enum, tabel, indexes, RLS, default roles, auth trigger)
 
 ---
 
@@ -568,31 +568,38 @@ Semua aturan ini wajib di-enforce di level API/server-action, bukan hanya UI.
 
 ```
 UCR-SALES-FUNNEL/
-├── docs/                          ← semua dokumentasi ada di sini
+├── docs/                          ← dokumentasi naratif
 │   ├── PROJECT_BRIEF_UCR.md       ← file ini, baca pertama kali
 │   ├── DEVELOPMENT_GUIDE.md       ← setup Next.js, shadcn, folder structure, roadmap 6 bulan
-│   ├── migration_001_init.sql     ← DDL 16 tabel + RLS + roles. Jalankan pertama di Supabase
-│   ├── seeder.sql                 ← master_recipes (30 SKU) + menu_packages (25 paket)
-│   ├── seeder_leads.sql           ← 1,054 leads + 1,079 lead_contacts dari data sales
-│   ├── BRD_Sales_Dashboard_UCR_v3.docx
-│   ├── ERD_UCR_v1.docx            ← ERD 16 tabel lengkap
-│   ├── LoA_Struktur_Requirements_UCR_v1.docx
-│   ├── IB_Struktur_Requirements_UCR_v1.docx
-│   ├── BEO_Struktur_Requirements_UCR_v1.docx
-│   ├── Permission_Matrix_UCR_v1.docx
-│   ├── Format_Reporting_UCR_v1.docx
-│   └── flowchart_ucr_v2.png
+│   ├── BUG_TRACKER.md             ← catatan bug & solusinya
+│   ├── flowchart_ucr_v2.png
+│   └── specs/                     ← requirement formal (.docx)
+│       ├── BRD_Sales_Dashboard_UCR_v3.docx
+│       ├── ERD_UCR_v1.docx        ← ERD 16 tabel lengkap
+│       ├── LoA_Struktur_Requirements_UCR_v1.docx
+│       ├── IB_Struktur_Requirements_UCR_v1.docx
+│       ├── BEO_Struktur_Requirements_UCR_v1.docx
+│       ├── Permission_Matrix_UCR_v1.docx
+│       └── Format_Reporting_UCR_v1.docx
 │
-└── ucr-sales-funnel/              ← Next.js project (dibuat saat development mulai)
-    ├── src/
+├── db/                            ← semua hal database (dijalankan manual di Supabase SQL Editor)
+│   ├── migrations/
+│   │   └── 001_init.sql           ← DDL 16 tabel + RLS + roles. Jalankan pertama
+│   ├── seeds/
+│   │   ├── seeder.sql             ← master_recipes (30 SKU) + menu_packages (25 paket)
+│   │   ├── seeder_leads.sql       ← 1,054 leads + 1,079 lead_contacts dari data sales
+│   │   └── seeder_menus.sql       ← seed menu tambahan
+│   └── reset_database.sql         ← ⚠️ DESTRUKTIF — drop semua tabel
+│
+└── (root project Next.js)         ← app/, lib/, features/, components/, types/
     ├── package.json
     └── ...
 ```
 
 **Urutan jalankan SQL di Supabase SQL Editor:**
-1. `migration_001_init.sql` → create semua tabel, enum, RLS, default roles
-2. `seeder.sql` → master_recipes + menu_packages
-3. `seeder_leads.sql` → leads + lead_contacts (1,054 records)
+1. `db/migrations/001_init.sql` → create semua tabel, enum, RLS, default roles
+2. `db/seeds/seeder.sql` → master_recipes + menu_packages
+3. `db/seeds/seeder_leads.sql` → leads + lead_contacts (1,054 records)
 4. Set Super Admin: `UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'Super Admin') WHERE email = 'arnoldsupriyadi@gmail.com';`
 
 **File yang sudah dihapus:**
@@ -612,7 +619,7 @@ Claude Code akan langsung paham konteks penuh tanpa perlu penjelasan ulang.
 
 **Kalau ada perubahan requirement:**
 1. Update `PROJECT_BRIEF_UCR.md` dulu (section yang relevan)
-2. Kalau ada perubahan schema → buat `migration_002_nama_perubahan.sql` (jangan edit migration_001)
+2. Kalau ada perubahan schema → buat `db/migrations/002_nama_perubahan.sql` (jangan edit 001_init)
 3. Kalau ada perubahan fitur → update section yang relevan di brief ini
 
 ---

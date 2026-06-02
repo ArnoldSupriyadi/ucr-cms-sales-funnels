@@ -9,9 +9,9 @@
 ### Step 1 — Supabase: Jalankan Migration
 ```
 Supabase Dashboard → SQL Editor → New Query
-Paste: docs/migration_001_init.sql → Run
-Paste: docs/seeder.sql → Run
-Paste: docs/seeder_leads.sql → Run
+Paste: db/migrations/001_init.sql → Run
+Paste: db/seeds/seeder.sql → Run
+Paste: db/seeds/seeder_leads.sql → Run
 ```
 
 ### Step 2 — Buat First Super Admin
@@ -328,9 +328,9 @@ const canApprove = user.role.permissions['loa.approve'] === true
 ```
 
 ### Perubahan Schema Database
-Jangan edit `migration_001_init.sql` yang sudah dijalankan. Buat file baru:
+Jangan edit `db/migrations/001_init.sql` yang sudah dijalankan. Buat file baru:
 ```
-docs/migration_002_nama_perubahan.sql
+db/migrations/002_nama_perubahan.sql
 ```
 Ini standar — setiap perubahan schema adalah migration baru yang di-append.
 
@@ -554,23 +554,25 @@ pm2 restart ucr-sales-funnel      # restart manual
 
 ---
 
-## 6. File-file di Folder docs/
+## 6. Peta File Dokumentasi & Database
 
+**`docs/` — dokumentasi naratif**
 | File | Keterangan |
 |---|---|
 | `PROJECT_BRIEF_UCR.md` | Master reference — baca ini dulu di Claude Code |
 | `DEVELOPMENT_GUIDE.md` | File ini — setup, struktur, roadmap, deploy |
-| `migration_001_init.sql` | DDL 16 tabel + RLS + default roles. Jalankan pertama. |
-| `seeder.sql` | master_recipes (30 SKU) + menu_packages (25 paket) |
-| `seeder_leads.sql` | 1,054 leads + 1,079 lead_contacts dari data sales |
-| `BRD_Sales_Dashboard_UCR_v3.docx` | Business Requirements Document final |
-| `ERD_UCR_v1.docx` | Entity Relationship Diagram 16 tabel |
-| `LoA_Struktur_Requirements_UCR_v1.docx` | Spesifikasi dokumen LoA |
-| `IB_Struktur_Requirements_UCR_v1.docx` | Spesifikasi dokumen IB |
-| `BEO_Struktur_Requirements_UCR_v1.docx` | Spesifikasi dokumen BEO |
-| `Format_Reporting_UCR_v1.docx` | Spesifikasi 6 tab reports |
-| `Permission_Matrix_UCR_v1.docx` | Matrix permission per role |
+| `BUG_TRACKER.md` | Catatan bug & solusi |
 | `flowchart_ucr_v2.png` | Flowchart happy path + exception path |
+| `specs/*.docx` | Requirement formal: BRD, ERD, LoA/IB/BEO, Permission Matrix, Format Reporting |
+
+**`db/` — database (jalankan manual di Supabase SQL Editor)**
+| File | Keterangan |
+|---|---|
+| `migrations/001_init.sql` | DDL 16 tabel + RLS + default roles. Jalankan pertama. |
+| `seeds/seeder.sql` | master_recipes (30 SKU) + menu_packages (25 paket) |
+| `seeds/seeder_leads.sql` | 1,054 leads + 1,079 lead_contacts dari data sales |
+| `seeds/seeder_menus.sql` | Seed menu tambahan |
+| `reset_database.sql` | ⚠️ DESTRUKTIF — drop semua tabel. Hati-hati. |
 
 ---
 
