@@ -372,6 +372,8 @@ export type Database = {
           service_charge_pct: number
           handling_fee_pct: number
           discount: number
+          discount_type: string
+          discount_value: number
           sub_total_1: number
           service_charge_amt: number
           sub_total_2: number
@@ -398,6 +400,8 @@ export type Database = {
           service_charge_pct?: number
           handling_fee_pct?: number
           discount?: number
+          discount_type?: string
+          discount_value?: number
           sub_total_1?: number
           service_charge_amt?: number
           sub_total_2?: number
@@ -424,6 +428,8 @@ export type Database = {
           service_charge_pct?: number
           handling_fee_pct?: number
           discount?: number
+          discount_type?: string
+          discount_value?: number
           sub_total_1?: number
           service_charge_amt?: number
           sub_total_2?: number
