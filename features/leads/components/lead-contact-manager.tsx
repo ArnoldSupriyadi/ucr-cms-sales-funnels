@@ -166,6 +166,7 @@ export function LeadContactManager({ leadId, contacts, canEdit, onUpdate }: Lead
                       variant="ghost"
                       className="h-6 w-6 text-gray-400 hover:text-blue-600"
                       onClick={() => openEdit(contact)}
+                      title="Edit kontak"
                     >
                       <Pencil className="h-3 w-3" />
                     </Button>
@@ -174,6 +175,7 @@ export function LeadContactManager({ leadId, contacts, canEdit, onUpdate }: Lead
                       variant="ghost"
                       className="h-6 w-6 text-gray-400 hover:text-red-600"
                       onClick={() => setDeleteId(contact.id)}
+                      title="Hapus kontak"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

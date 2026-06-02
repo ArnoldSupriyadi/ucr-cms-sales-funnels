@@ -94,6 +94,7 @@ export function LeadTable({
     } else {
       toast.success('Lead berhasil dihapus')
       router.refresh()
+      setCurrentPage(0)
     }
     setDeleting(false)
     setDeleteId(null)
