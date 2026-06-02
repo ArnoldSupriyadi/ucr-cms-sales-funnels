@@ -1,231 +1,152 @@
 # UCR Sales Funnel — Development Guide
-**Versi:** 1.1.0 | **Tanggal:** 25 Mei 2026
-**Stack:** Next.js 14 (App Router) + Supabase + VPS Hetzner
+**Versi:** 2.0.0 | **Tanggal:** 2 Juni 2026
+**Stack:** Next.js 16 (App Router, `proxy.ts`) + React 19 + Supabase + shadcn/ui + Tailwind 4 + VPS Hetzner
 
 ---
 
-## 1. Urutan Setup (Lakukan Sekali)
+## 1. Setup
 
-### Step 1 — Supabase: Jalankan Migration
-```
-Supabase Dashboard → SQL Editor → New Query
-Paste: db/migrations/001_init.sql → Run
-Paste: db/seeds/seeder.sql → Run
-Paste: db/seeds/seeder_leads.sql → Run
+### 1A — Setup di Laptop Baru (repo & database sudah ada)
+
+Kasus paling umum sekarang. Project sudah jadi di GitHub dan Supabase sudah live —
+tinggal clone, install, isi env, jalan.
+
+```bash
+git clone https://github.com/ArnoldSupriyadi/ucr-cms-sales-funnels.git
+cd ucr-cms-sales-funnels
+npm install
+cp .env.example .env.local        # lalu isi 2 key (lihat di bawah)
+npm run dev                        # http://localhost:3000
 ```
 
-### Step 2 — Buat First Super Admin
+**Isi `.env.local`** — ambil dari Supabase Dashboard → Project Settings → API
+(project `mtpzxtqalqqghwokqkkf`). `.env.example` sudah berisi URL + instruksinya:
+
+| Variable | Sumber |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | sudah terisi di `.env.example` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project API keys → **anon public** |
+| `SUPABASE_SERVICE_ROLE_KEY` | Project API keys → **service_role** (⚠️ rahasia) |
+
+> **Database tidak perlu di-setup ulang.** Supabase itu cloud bersama dan semua
+> migration sudah dijalankan di sana. Laptop baru cukup pakai key yang sama →
+> langsung connect ke DB yang sama.
+
+Perintah harian: `npm run dev` (jalankan), `npm run build` (build),
+`npm run lint` (lint), `npm test` (unit test Vitest), `npm run test:watch` (watch mode).
+
+---
+
+### 1B — Setup Supabase dari Nol (hanya jika membuat project DB baru)
+
+Hanya perlu kalau bikin instance Supabase baru (mis. environment staging terpisah).
+
+**Step 1 — Jalankan migration + seed** (Supabase Dashboard → SQL Editor → New Query):
+```
+Paste: db/migrations/001_init.sql      → Run
+Paste: db/migrations/002_loa_discount.sql → Run   (semua migration berurutan)
+Paste: db/seeds/seeder.sql             → Run
+Paste: db/seeds/seeder_leads.sql       → Run
+```
+
+**Step 2 — Buat first Super Admin** (setelah daftar user via Supabase Auth):
 ```sql
--- Di Supabase SQL Editor, setelah daftar via Auth:
 UPDATE users
 SET role_id = (SELECT id FROM roles WHERE name = 'Super Admin')
-WHERE email = 'superadminucr@gmail.com';
+WHERE email = 'superadmin@umara.co.id';
 ```
 
-### Step 3 — Init Next.js Project
-```bash
-npx create-next-app@latest ucr-sales-funnel \
-  --typescript \
-  --tailwind \
-  --eslint \
-  --app \
-  --src-dir \
-  --import-alias "@/*"
-
-cd ucr-sales-funnel
-```
-
-### Step 4 — Setup shadcn/ui
-```bash
-# Init shadcn/ui (jalankan setelah create-next-app)
-npx shadcn@latest init
-```
-Pilih saat prompted:
-- Style: **Default**
-- Base color: **Slate**
-- CSS variables: **Yes**
-
-Lalu install komponen yang dibutuhkan:
-```bash
-npx shadcn@latest add button input select textarea label
-npx shadcn@latest add table card badge dialog sheet
-npx shadcn@latest add form
-npx shadcn@latest add tabs
-npx shadcn@latest add dropdown-menu command popover
-npx shadcn@latest add alert-dialog
-npx shadcn@latest add separator skeleton
-npx shadcn@latest add sonner
-```
-
-### Step 5 — Install Dependencies Tambahan
-```bash
-# Core Supabase
-npm install @supabase/supabase-js @supabase/ssr
-
-# Document generation
-npm install docx pdf-lib
-
-# Charts
-npm install chart.js react-chartjs-2
-
-# Icons (sudah include via shadcn)
-npm install lucide-react
-
-# Form handling (sudah include via shadcn form)
-npm install react-hook-form zod @hookform/resolvers
-
-# Date
-npm install date-fns
-```
-
-### Step 6 — Environment Variables
-```bash
-# .env.local
-NEXT_PUBLIC_SUPABASE_URL=https://mtpzxtqalqqghwokqkkf.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
-NODE_ENV=development
-```
-
-### Step 7 — Generate TypeScript Types dari Supabase
+**Step 3 — (Opsional) Regenerate TypeScript types:**
 ```bash
 npx supabase login
-npx supabase gen types typescript \
-  --project-id mtpzxtqalqqghwokqkkf \
-  > src/types/database.ts
+npx supabase gen types typescript --project-id <PROJECT_ID> > types/database.ts
 ```
-Jalankan ulang setiap kali ada perubahan schema database.
+Catatan: selama UAT, `types/database.ts` lebih sering di-edit manual mengikuti tiap
+file migration baru (lihat §4 "Perubahan Schema Database").
 
 ---
 
 ## 2. Struktur Folder (Feature-Based)
 
+> **Tanpa `src/`** — semua di root. **`proxy.ts`** (bukan `middleware.ts`) sesuai
+> konvensi Next.js 16. Sebagian folder di bawah masih target (IB/BEO/reports belum dibangun).
+
 ```
-ucr-sales-funnel/
-├── src/
-│   ├── app/
-│   │   ├── (auth)/
-│   │   │   ├── login/page.tsx
-│   │   │   └── layout.tsx
-│   │   │
-│   │   ├── (dashboard)/
-│   │   │   ├── layout.tsx              # Sidebar + header wrapper
-│   │   │   ├── leads/
-│   │   │   │   ├── page.tsx            # List leads
-│   │   │   │   ├── new/page.tsx
-│   │   │   │   └── [id]/
-│   │   │   │       ├── page.tsx        # Detail lead + contacts
-│   │   │   │       └── edit/page.tsx
-│   │   │   │
-│   │   │   ├── orders/                 # DB: tabel `bookings`
-│   │   │   │   ├── page.tsx            # Pipeline view
-│   │   │   │   ├── new/page.tsx
-│   │   │   │   └── [id]/
-│   │   │   │       ├── page.tsx        # Detail + status timeline
-│   │   │   │       ├── edit/page.tsx
-│   │   │   │       ├── loa/page.tsx
-│   │   │   │       ├── ib/page.tsx     # CC only
-│   │   │   │       └── beo/page.tsx
-│   │   │   │
-│   │   │   ├── reports/
-│   │   │   │   ├── page.tsx            # Default: P&L
-│   │   │   │   ├── top-accounts/page.tsx
-│   │   │   │   ├── top-sales/page.tsx
-│   │   │   │   ├── mtd/page.tsx
-│   │   │   │   ├── variance/page.tsx
-│   │   │   │   └── forecast/page.tsx
-│   │   │   │
-│   │   │   ├── targets/page.tsx        # GM only
-│   │   │   ├── master-data/
-│   │   │   │   ├── recipes/page.tsx
-│   │   │   │   ├── packages/page.tsx
-│   │   │   │   └── overhead/page.tsx
-│   │   │   └── settings/
-│   │   │       ├── users/page.tsx
-│   │   │       └── roles/page.tsx      # Super Admin only
-│   │   │
-│   │   ├── api/
-│   │   │   ├── loa/
-│   │   │   │   ├── approve/route.ts    # Token approval handler
-│   │   │   │   └── pdf/route.ts        # Generate PDF + stamp signature
-│   │   │   └── notifications/
-│   │   │       └── send/route.ts       # WA/Telegram
-│   │   │
-│   │   ├── layout.tsx
-│   │   └── page.tsx                    # Redirect ke /login atau /orders
+ucr-cms-sales-funnels/
+├── app/
+│   ├── (auth)/
+│   │   ├── login/page.tsx
+│   │   └── layout.tsx
 │   │
-│   ├── components/
-│   │   ├── ui/                         # shadcn/ui components (auto-generated)
-│   │   ├── layout/
-│   │   │   ├── sidebar.tsx
-│   │   │   ├── header.tsx
-│   │   │   └── nav-item.tsx
-│   │   └── charts/
-│   │       ├── bar-chart.tsx
-│   │       ├── line-chart.tsx
-│   │       └── donut-chart.tsx
-│   │
-│   ├── features/
+│   ├── (dashboard)/
+│   │   ├── layout.tsx                  # Sidebar + header wrapper
 │   │   ├── leads/
-│   │   │   ├── components/             # LeadForm, LeadTable, ContactCard
-│   │   │   ├── hooks/                  # useLeads, useLead, useLeadContacts
-│   │   │   └── actions.ts              # Server Actions
+│   │   │   ├── page.tsx                # List leads
+│   │   │   ├── new/page.tsx
+│   │   │   └── [id]/
+│   │   │       ├── page.tsx            # Detail lead + contacts
+│   │   │       └── edit/page.tsx
+│   │   │
 │   │   ├── orders/                     # DB: tabel `bookings`
-│   │   │   ├── components/             # OrderForm, StatusTimeline, PipelineCard
-│   │   │   ├── hooks/                  # useOrders
-│   │   │   └── actions.ts
-│   │   ├── loa/
-│   │   │   ├── components/             # LoaForm, LoaPreview, ApprovalBanner
-│   │   │   ├── hooks/
-│   │   │   └── actions.ts              # createLoa, submitForApproval, approveLoa
-│   │   ├── ib/
-│   │   │   ├── components/             # IbForm, FoodCostTable, OverheadTable, GpSummary
-│   │   │   ├── hooks/
-│   │   │   └── actions.ts
-│   │   ├── beo/
-│   │   │   ├── components/             # BeoForm, BeoPreview
-│   │   │   ├── hooks/
-│   │   │   └── actions.ts
-│   │   └── reports/
-│   │       ├── components/             # PnlTable, TopAccountsChart, dll
-│   │       ├── hooks/
-│   │       └── queries.ts              # SQL/RPC queries untuk reports
+│   │   │   ├── page.tsx                # Pipeline view
+│   │   │   ├── new/page.tsx
+│   │   │   └── [id]/
+│   │   │       ├── page.tsx            # Detail + status timeline
+│   │   │       ├── edit/page.tsx
+│   │   │       ├── loa/page.tsx
+│   │   │       ├── ib/page.tsx         # CC only
+│   │   │       └── beo/page.tsx
+│   │   │
+│   │   ├── reports/                    # (target)
+│   │   ├── targets/page.tsx            # GM only (target)
+│   │   ├── master-data/               # recipes/packages/overhead (target)
+│   │   └── settings/                   # users/roles (target)
 │   │
-│   ├── lib/
-│   │   ├── supabase/
-│   │   │   ├── client.ts               # createBrowserClient
-│   │   │   ├── server.ts               # createServerClient
-│   │   │   └── middleware.ts
-│   │   ├── auth/
-│   │   │   └── permissions.ts          # checkPermission(user, 'leads.create')
-│   │   ├── documents/
-│   │   │   ├── loa-pdf.ts              # pdf-lib: generate + stamp signature
-│   │   │   └── loa-docx.ts             # docx: generate Word
-│   │   ├── notifications/
-│   │   │   └── whatsapp.ts             # WA Business API / Telegram Bot
-│   │   ├── utils/
-│   │   │   ├── format.ts               # formatRupiah, formatDate
-│   │   │   ├── order-no.ts             # Generate UCR-YYYYMM-XXX (nomor Order)
-│   │   │   └── cn.ts                   # clsx + tailwind-merge
-│   │   └── constants/
-│   │       ├── segmen.ts               # ['Wedding','Private','Corporate','BUMN','Government']
-│   │       └── status.ts               # Order/LoA status colors & labels
-│   │
-│   ├── types/
-│   │   ├── database.ts                 # Auto-generated dari Supabase
-│   │   ├── domain.ts                   # Business domain types
-│   │   └── api.ts                      # API request/response types
-│   │
-│   └── middleware.ts                   # Auth session + role guard
+│   ├── api/                            # loa/approve, loa/pdf, notifications (target)
+│   ├── layout.tsx
+│   └── page.tsx                        # Redirect ke /login atau /orders
 │
-├── .github/
-│   └── workflows/
-│       └── deploy.yml                  # CI/CD ke VPS
-├── ecosystem.config.js                 # PM2 config
-├── .env.local
-├── .env.example
+├── components/
+│   ├── ui/                             # shadcn/ui components
+│   ├── layout/                         # sidebar, header, nav-item
+│   └── charts/                         # bar/line/donut (target)
+│
+├── features/                           # per-domain: components/ + actions.ts
+│   ├── leads/                          # LeadForm, LeadTable, ContactCard
+│   ├── orders/                         # OrderForm, StatusTimeline, PipelineCard
+│   ├── loa/                            # (Bulan 3 — sedang dibangun)
+│   ├── ib/                             # (target)
+│   ├── beo/                            # (target)
+│   └── reports/                        # (target)
+│
+├── lib/
+│   ├── supabase/
+│   │   ├── client.ts                   # createClient (browser)
+│   │   └── server.ts                   # createClient (server, async)
+│   ├── auth/
+│   │   └── permissions.ts              # getAppUser(); user.permissions['loa.create']
+│   ├── loa/                            # calculations, selection-rules, menu-detail, doc-no, catalog
+│   ├── utils/
+│   │   ├── format.ts                   # formatRupiah, formatDate
+│   │   ├── order-no.ts                 # Generate UCR-YYYYMM-XXX (nomor Order)
+│   │   └── cn.ts                       # clsx + tailwind-merge
+│   ├── documents/                      # loa-pdf, loa-docx (target)
+│   └── notifications/                  # whatsapp/telegram (target)
+│
+├── types/
+│   ├── database.ts                     # Tipe Supabase (di-maintain manual selama UAT)
+│   └── domain.ts                       # ActionResult<T> + business domain types
+│
+├── db/                                 # SQL (jalankan manual di Supabase — lihat §6)
+│   ├── migrations/                     # 001_init.sql, 002_loa_discount.sql, ...
+│   ├── seeds/
+│   └── reset_database.sql
+│
+├── docs/                               # PROJECT_BRIEF, guide ini, specs/, superpowers/
+├── proxy.ts                            # Auth session + role guard (Next.js 16)
+├── vitest.config.ts
+├── .env.example                        # template env (commit) — .env.local rahasia (gitignore)
 ├── next.config.ts
-├── tailwind.config.ts
 └── package.json
 ```
 
@@ -233,13 +154,13 @@ ucr-sales-funnel/
 
 ## 3. Urutan Development (6 Bulan)
 
-### Bulan 1 — Foundation
-- [ ] Setup project (Step 1–7 di atas)
-- [ ] Buat Supabase client helper (browser + server)
-- [ ] Setup middleware auth (redirect ke login kalau belum login)
-- [ ] Layout dashboard: sidebar, header, nav
-- [ ] Halaman login (Supabase Auth email/password)
-- [ ] Role guard: cek permissions di middleware
+### Bulan 1 — Foundation ✅
+- [x] Setup project (lihat §1)
+- [x] Buat Supabase client helper (browser + server)
+- [x] Setup `proxy.ts` auth (redirect ke login kalau belum login) + single-session enforcement
+- [x] Layout dashboard: sidebar (collapsible) , header, nav
+- [x] Halaman login (Supabase Auth email/password)
+- [x] Role guard: cek permissions di `proxy.ts`
 
 ### Bulan 2 — Core Data: Leads & Orders (DB: tabel `bookings`)
 - [x] CRUD Leads + Lead Contacts
@@ -248,9 +169,11 @@ ucr-sales-funnel/
 - [x] Generate booking_no otomatis (UCR-YYYYMM-XXX) — util `lib/utils/order-no.ts`
 - [ ] RLS test: sales hanya lihat lead sendiri
 
-### Bulan 3 — Dokumen: LoA
-- [ ] Form LoA (multi-item, auto-calculate pricing)
-- [ ] Menu packages dropdown (dari tabel menu_packages)
+### Bulan 3 — Dokumen: LoA 🔄 (sedang dikerjakan)
+> Plan detail: `docs/superpowers/plans/2026-06-02-loa-form.md` (17 task, 4 fase).
+> Progres: Task 1–2 (Vitest + migration diskon) & Task 4 (kalkulasi harga, TDD) selesai.
+- [ ] Form LoA wizard 4 langkah (multi-item, auto-calculate pricing) — *in progress*
+- [ ] Menu drawer drill-down (dari menu_packages + katalog)
 - [ ] Generate LoA PDF dengan pdf-lib
 - [ ] Approval flow: generate token → kirim WA/Telegram → GM approve via link
 - [ ] Overlay signature GM ke PDF setelah approve
@@ -297,17 +220,30 @@ ucr-sales-funnel/
 
 ### Supabase Patterns
 ```typescript
-// Server Component (read data)
-import { createServerClient } from '@/lib/supabase/server'
-const supabase = await createServerClient()
+// Server Component / Server Action (read & write data)
+import { createClient } from '@/lib/supabase/server'
+const supabase = await createClient()   // catatan: async di server
 const { data } = await supabase.from('leads').select('*, lead_contacts(*)')
 
-// Server Action (write data)
+// Server Action — tambahkan directive di atas file
 'use server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 // Client Component (realtime / interactive)
-import { createBrowserClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'  // sync
+```
+
+### Auth & Permission
+```typescript
+import { getAppUser } from '@/lib/auth/permissions'
+const user = await getAppUser()
+if (!user?.permissions['loa.approve']) { /* tolak */ }
+```
+
+### Server Action Return Type
+Pakai discriminated union `ActionResult<T>` dari `@/types/domain`:
+```typescript
+{ success: true; data: T } | { success: false; error: string }
 ```
 
 ### Format Rupiah
@@ -328,11 +264,17 @@ const canApprove = user.role.permissions['loa.approve'] === true
 ```
 
 ### Perubahan Schema Database
-Jangan edit `db/migrations/001_init.sql` yang sudah dijalankan. Buat file baru:
-```
-db/migrations/002_nama_perubahan.sql
-```
-Ini standar — setiap perubahan schema adalah migration baru yang di-append.
+Tidak ada migration tool (Drizzle/Prisma/Supabase CLI) — semua SQL dijalankan manual
+paste di Supabase SQL Editor.
+
+**Selama UAT** (sekarang): tiap perubahan schema = file baru berurutan
+(`002_xxx.sql`, `003_...`) berisi `ALTER`/`CREATE`. Jalankan **file itu saja** di SQL Editor.
+Jangan edit file yang sudah dijalankan, jangan reset — supaya data UAT tidak hilang.
+Update `types/database.ts` manual mengikuti perubahan.
+
+**Saat UAT selesai** (sebelum produksi): squash isi semua file `002+` ke dalam
+`001_init.sql` di posisi yang tepat, lalu hapus file `002+` — agar baseline produksi
+satu file bersih yang dijalankan dari nol.
 
 ---
 
@@ -569,6 +511,7 @@ pm2 restart ucr-sales-funnel      # restart manual
 | File | Keterangan |
 |---|---|
 | `migrations/001_init.sql` | DDL 16 tabel + RLS + default roles. Jalankan pertama. |
+| `migrations/002_loa_discount.sql` | Kolom diskon LoA (`discount_type` + `discount_value`). |
 | `seeds/seeder.sql` | master_recipes (30 SKU) + menu_packages (25 paket) |
 | `seeds/seeder_leads.sql` | 1,054 leads + 1,079 lead_contacts dari data sales |
 | `seeds/seeder_menus.sql` | Seed menu tambahan |
@@ -576,5 +519,5 @@ pm2 restart ucr-sales-funnel      # restart manual
 
 ---
 
-*Terakhir diupdate: 25 Mei 2026 — Arnold Supriyadi / PT Umara Cipta Rasa*
-*Versi: 1.1.0 — Final, siap development*
+*Terakhir diupdate: 2 Juni 2026 — Arnold Supriyadi / PT Umara Cipta Rasa*
+*Versi: 2.0.0 — disesuaikan dengan kondisi codebase aktual (Next.js 16, tanpa src/, proxy.ts)*
