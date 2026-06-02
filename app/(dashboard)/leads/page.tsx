@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAppUser } from '@/lib/auth/permissions'
-import { LeadTable } from '@/features/leads/components/lead-table'
+import { LeadsClient } from '@/features/leads/components/leads-client'
 import type { LeadWithContacts } from '@/types/domain'
 
 export default async function LeadsPage() {
@@ -17,14 +17,15 @@ export default async function LeadsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Leads</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
+        <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
+        <p className="mt-0.5 text-sm text-gray-500">
           {leads.length.toLocaleString('id-ID')} perusahaan / klien terdaftar
         </p>
       </div>
-      <LeadTable
+      <LeadsClient
         leads={leads}
         canCreate={user.permissions['leads.create'] === true}
+        canEdit={user.permissions['leads.edit'] === true}
         canDelete={user.permissions['leads.delete'] === true}
       />
     </div>
