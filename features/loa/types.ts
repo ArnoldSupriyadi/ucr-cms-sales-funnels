@@ -50,11 +50,18 @@ export interface LoaItemDraft {
   selections: DraftSelection[]
 }
 export interface LoaDetailDraft {
+  eventName: string
+  eventAddress: string   // dari orders.venue
+  eventDate: string      // ISO 'YYYY-MM-DD'
+  eventTime: string
+  pax: number
   setupLocation: string
+  salesId: string
 }
 export interface LoaPricingDraft {
   scPct: number
   handlingPct: number
+  discountEnabled: boolean
   discountType: 'percent' | 'flat'
   discountValue: number
 }
@@ -67,6 +74,26 @@ export interface LoaWizardState {
 export const DEFAULT_PRICING: LoaPricingDraft = {
   scPct: 5,
   handlingPct: 15,
+  discountEnabled: false,
   discountType: 'flat',
   discountValue: 0,
+}
+
+// ---- Data read-only dari server ----
+export interface InitialLoaData {
+  orderNo: string
+  client: {
+    name: string
+    segmen: string
+    address: string
+    picName: string
+    picPhone: string
+  }
+  detail: LoaDetailDraft
+}
+export interface SalesUser {
+  id: string
+  name: string
+  phone: string
+  email: string
 }
