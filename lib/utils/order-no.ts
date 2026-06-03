@@ -4,7 +4,9 @@ export async function generateOrderNo(eventDate: string): Promise<string> {
   const date = new Date(eventDate)
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
-  const prefix = `UCR-${year}${month}-`
+  const day = String(date.getDate()).padStart(2, '0')
+  // Format: UCR-YYYY-MM-DD-XXX (seq reset per-hari berdasarkan event_date)
+  const prefix = `UCR-${year}-${month}-${day}-`
 
   const supabase = await createClient()
   const { data } = await supabase
