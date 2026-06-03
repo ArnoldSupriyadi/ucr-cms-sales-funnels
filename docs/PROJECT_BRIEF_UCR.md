@@ -11,11 +11,9 @@
 
 ---
 
-> ## ⚠️ Catatan Terminologi — "Order" vs "booking"
+> ## ⚠️ Catatan Terminologi — "Order"
 >
-> Entitas event/pemesanan disebut **"Order"** di UI dan bahasa bisnis (hasil rename Bulan 2), tapi di **database tetap bernama tabel `bookings`**. Semua identifier teknis tidak ikut berubah: tabel `bookings`, kolom `booking_no`, tabel `booking_status_logs`, FK `booking_id`, dan format nomor `BK-2025-001`.
->
-> **Aturan baca dokumen ini:** kata **"Order"** = konsep bisnis; `bookings`/`booking_*` (dalam format kode) = nama asli di schema. Keduanya merujuk entitas yang sama.
+> Entitas event/pemesanan disebut **"Order"** di UI, bahasa bisnis, DAN di database: tabel `orders`, kolom `order_no` (format `UCR-YYYY-MM-DD-XXX`), tabel `order_status_logs`, FK `order_id`. Satu-satunya sisa penamaan lama adalah kolom `loa.booking_id` (FK ke `orders(id)`) — biarkan apa adanya.
 >
 > Alur produk: **Lead → Order → LoA → (IB + BEO)**. Satu Order menghasilkan satu LoA (1:1).
 
@@ -77,7 +75,7 @@ Sub Total 2 + PB1 10% + Handling Fee 15%
 
 ---
 
-## 4. Order Status Flow (DB: tabel `bookings`)
+## 4. Order Status Flow (DB: tabel `orders`)
 
 ```
 TENTATIVE → DEFINITE → ACTUAL (happy path, terminal)
@@ -86,7 +84,7 @@ TENTATIVE → DEFINITE → ACTUAL (happy path, terminal)
 ```
 
 - Actual tidak bisa di-cancel (event sudah terjadi)
-- Setiap perubahan status dicatat di `booking_status_logs` (append-only)
+- Setiap perubahan status dicatat di `order_status_logs` (append-only)
 - Billing Actual mengikuti pax aktual yang dilayani (bisa beda dari Definite)
 - Perubahan tanggal event = revenue pindah ke bulan forecast berbeda
 - Perubahan pax/menu = update nilai revenue + trigger BEO amendment + log
@@ -96,7 +94,7 @@ TENTATIVE → DEFINITE → ACTUAL (happy path, terminal)
 ## 5. Klasifikasi (Dua Dimensi — Jangan Dicampur)
 
 1. **Segmen** (5 nilai tetap): `Wedding` / `Private` / `Corporate` / `BUMN` / `Government`  
-   → Dipakai di leads, bookings, targets, semua filter report  
+   → Dipakai di leads, orders, targets, semua filter report  
    → Disimpan sebagai PostgreSQL enum `segmen_enum`
 
 2. **Line Business**: industri perusahaan klien (Oil & Gas, Mining, Telco, IT, dll)  
@@ -117,7 +115,7 @@ TENTATIVE → DEFINITE → ACTUAL (happy path, terminal)
 
 **Catatan implementasi:**
 - Super Admin bisa tambah custom role baru via UI dengan checkbox permissions
-- Sales hanya lihat leads/bookings milik sendiri (Supabase RLS `WHERE sales_id = auth.uid()`)
+- Sales hanya lihat leads/orders milik sendiri (Supabase RLS `WHERE sales_id = auth.uid()`)
 - GM + Super Admin lihat semua data
 
 ---
@@ -307,11 +305,11 @@ Projected GP% = ...
 | segmen | enum | NULLABLE | Jika diisi = target spesifik segmen |
 | set_by | uuid | FK → users.id | GM yang set target |
 
-### 8.6 `bookings` (UI: **Order**)
+### 8.6 `orders` (UI: **Order**)
 | Field | Type | Constraint | Keterangan |
 |-------|------|-----------|-----------|
 | id | uuid | PK | |
-| booking_no | varchar(30) | NOT NULL, UNIQUE | Auto-generated (contoh: BK-2025-001) |
+| order_no | varchar(30) | NOT NULL, UNIQUE | Auto-generated (contoh: UCR-2026-06-03-001) |
 | lead_id | uuid | FK → leads.id | Klien |
 | sales_id | uuid | FK → users.id | Sales yang handle |
 | status | enum | NOT NULL | tentative/definite/actual/cancel |
@@ -326,11 +324,11 @@ Projected GP% = ...
 | exception_approved_by | uuid | FK → users.id, NULLABLE | GM yang approve exception |
 | updated_at | timestamptz | DEFAULT now() | Auto-update via trigger |
 
-### 8.7 `booking_status_logs`
+### 8.7 `order_status_logs`
 | Field | Type | Constraint | Keterangan |
 |-------|------|-----------|-----------|
 | id | uuid | PK | |
-| booking_id | uuid | FK → bookings.id | |
+| order_id | uuid | FK → orders.id | |
 | from_status | enum | NULLABLE | Null = status pertama kali |
 | to_status | enum | NOT NULL | Status baru |
 | changed_by | uuid | FK → users.id | User yang ubah status |
@@ -342,7 +340,7 @@ Projected GP% = ...
 | Field | Type | Constraint | Keterangan |
 |-------|------|-----------|-----------|
 | id | uuid | PK | |
-| booking_id | uuid | FK → bookings.id, UNIQUE | 1:1 dengan Order |
+| booking_id | uuid | FK → orders.id, UNIQUE | 1:1 dengan Order (sisa penamaan lama) |
 | doc_no | varchar(50) | NOT NULL | Nomor dokumen LoA |
 | revision_no | smallint | DEFAULT 0 | 0 = original, naik setiap revisi |
 | revision_reason | text | NULLABLE | Wajib diisi jika revision_no > 0 |
@@ -490,15 +488,15 @@ Projected GP% = ...
 | From | To | Cardinality | Keterangan |
 |------|----|------------|-----------|
 | leads | lead_contacts | 1 : N | Unlimited PIC per lead |
-| leads | bookings | 1 : N | Satu klien bisa banyak Order |
-| bookings | loa | 1 : 1 | Satu Order = satu LoA |
+| leads | orders | 1 : N | Satu klien bisa banyak Order |
+| orders | loa | 1 : 1 | Satu Order = satu LoA |
 | loa | loa_items | 1 : N | LoA bisa banyak line item |
 | loa | ib | 1 : 1 | Satu LoA = satu IB |
 | loa | beo | 1 : 1 | Satu LoA = satu BEO |
 | ib | ib_food_items | 1 : N | IB bisa banyak menu item |
 | ib | ib_overhead_items | 1 : N | IB bisa banyak overhead item |
 | master_recipes | ib_food_items | 1 : N | Satu recipe bisa dipakai banyak IB |
-| bookings | booking_status_logs | 1 : N | Full audit trail status |
+| orders | order_status_logs | 1 : N | Full audit trail status |
 | users | roles | N : 1 | Banyak user berbagi satu role |
 
 ---
@@ -554,12 +552,12 @@ Semua aturan ini wajib di-enforce di level API/server-action, bukan hanya UI.
 6. **Approval token** — `crypto.randomBytes(32).toString('hex')`, one-time use, invalidate setelah klik atau expired
 7. **Signature stamp pdf-lib** — overlay `users.signature_url` + nama + jabatan + timestamp ke LoA PDF setelah approved. Simpan ke Supabase Storage
 8. **BEO Darurat** — `is_emergency = true` → banner warning di UI Ops. Flag tidak dihapus setelah reconfirm
-9. **Order status transitions** — hanya enforce: tentative→definite, definite→actual, tentative/definite→cancel. Log semua ke `booking_status_logs`
+9. **Order status transitions** — hanya enforce: tentative→definite, definite→actual, tentative/definite→cancel. Log semua ke `order_status_logs`
 10. **lead_contacts primary** — partial unique index: `CREATE UNIQUE INDEX ON lead_contacts (lead_id) WHERE is_primary = true`. Toggle di UI harus auto-unset previous primary
 11. **LoA/BEO PIC prefill** — ambil dari `lead_contacts WHERE is_primary = true` untuk default PIC
 12. **Supabase RLS** — Sales: `WHERE sales_id = auth.uid()`. GM + Super Admin: lihat semua. Cost Controller: read LoA, write IB
 13. **Version history** — LoA, IB, BEO pakai `revision_no`. Active = max(revision_no). Versi lama read-only
-14. **Billing Actual** — mengikuti pax aktual saat event (bisa beda dari Definite), update di `bookings` saat status → Actual
+14. **Billing Actual** — mengikuti pax aktual saat event (bisa beda dari Definite), update di `orders` saat status → Actual
 15. **Revenue recognition** — hanya status Actual yang masuk kalkulasi achievement vs target dan P&L
 
 ---

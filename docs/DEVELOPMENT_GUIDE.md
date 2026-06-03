@@ -87,7 +87,7 @@ ucr-cms-sales-funnels/
 │   │   │       ├── page.tsx            # Detail lead + contacts
 │   │   │       └── edit/page.tsx
 │   │   │
-│   │   ├── orders/                     # DB: tabel `bookings`
+│   │   ├── orders/                     # DB: tabel `orders`
 │   │   │   ├── page.tsx                # Pipeline view
 │   │   │   ├── new/page.tsx
 │   │   │   └── [id]/
@@ -128,7 +128,7 @@ ucr-cms-sales-funnels/
 │   ├── loa/                            # calculations, selection-rules, menu-detail, doc-no, catalog
 │   ├── utils/
 │   │   ├── format.ts                   # formatRupiah, formatDate
-│   │   ├── order-no.ts                 # Generate UCR-YYYYMM-XXX (nomor Order)
+│   │   ├── order-no.ts                 # Generate UCR-YYYY-MM-DD-XXX (nomor Order)
 │   │   └── cn.ts                       # clsx + tailwind-merge
 │   ├── documents/                      # loa-pdf, loa-docx (target)
 │   └── notifications/                  # whatsapp/telegram (target)
@@ -162,11 +162,11 @@ ucr-cms-sales-funnels/
 - [x] Halaman login (Supabase Auth email/password)
 - [x] Role guard: cek permissions di `proxy.ts`
 
-### Bulan 2 — Core Data: Leads & Orders (DB: tabel `bookings`)
+### Bulan 2 — Core Data: Leads & Orders (DB: tabel `orders`)
 - [x] CRUD Leads + Lead Contacts
 - [x] CRUD Orders + status change flow
 - [x] Order status timeline component
-- [x] Generate booking_no otomatis (UCR-YYYYMM-XXX) — util `lib/utils/order-no.ts`
+- [x] Generate order_no otomatis (UCR-YYYY-MM-DD-XXX) — util `lib/utils/order-no.ts`
 - [ ] RLS test: sales hanya lihat lead sendiri
 
 ### Bulan 3 — Dokumen: LoA 🔄 (sedang dikerjakan)

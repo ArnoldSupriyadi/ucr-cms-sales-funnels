@@ -157,7 +157,7 @@ type LoaWizardState = {
 
 ## 6. Nomor Dokumen LoA
 
-Auto-generate mengikuti pola `order-no.ts` yang sudah ada. Format: **`LOA-YYYYMM-XXX`** (XXX = nomor urut bulan berjalan, zero-padded). Unik via `loa.doc_no UNIQUE`. Di-generate server-side saat simpan pertama.
+Auto-generate mengikuti pola `order-no.ts` yang sudah ada. Format: **`LOA-YYYY-MM-DD-XXX`** (XXX = nomor urut harian dari tanggal generate, zero-padded). Unik via `loa.doc_no UNIQUE`. Di-generate server-side saat simpan pertama.
 
 ---
 
@@ -216,4 +216,4 @@ Dijalankan manual di Supabase SQL Editor (konvensi project).
 
 ## 12. Follow-up Terpisah (di luar implementasi ini)
 
-Brief (`docs/PROJECT_BRIEF_UCR.md`) masih outdated: mendokumentasikan tabel `bookings` + 16 tabel, padahal schema asli pakai `orders` + ~22 tabel (ada `loa_item_selections`, `menu_*_catalog`). Catatan terminologi yang ditambahkan 2026-06-02 justru terbalik (menyebut "tabel bookings"). **Perlu koreksi brief** agar sesuai schema `001_init.sql` — dikerjakan terpisah, bukan bagian dari implementasi form LoA ini.
+Penamaan `orders`/`order_no`/`order_status_logs` + format nomor di brief (`docs/PROJECT_BRIEF_UCR.md`) sudah dikoreksi agar sesuai schema `001_init.sql` (2026-06-03). Sisa yang masih perlu audit terpisah: jumlah tabel tertulis 16 padahal schema asli ~22 tabel (ada `loa_item_selections`, `menu_*_catalog`) — bukan bagian implementasi form LoA ini.
