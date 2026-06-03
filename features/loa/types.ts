@@ -7,6 +7,8 @@ export interface CatalogCategory {
   componentType: string
   nama: string
   rule: SelectionRule
+  /** Label header grup (parent) bila kategori ini bagian dari grup; null bila berdiri sendiri. */
+  groupName: string | null
   items: CatalogItem[]
 }
 export interface CatalogComponent {
