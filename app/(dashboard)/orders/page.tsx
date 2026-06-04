@@ -1,51 +1,16 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getAppUser } from '@/lib/auth/permissions'
-import { PipelineCard } from '@/features/orders/components/pipeline-card'
+import { LoaOrdersTable } from '@/features/orders/components/loa-orders-table'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import type { OrderWithLead, OrderStatus } from '@/types/domain'
 
-const PIPELINE_COLUMNS: {
-  status: OrderStatus
-  label: string
-  bg: string
-  border: string
-  dot: string
-  count_bg: string
-}[] = [
-  {
-    status: 'Tentative',
-    label: 'Tentative',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
-    dot: 'bg-amber-400',
-    count_bg: 'bg-amber-100 text-amber-700',
-  },
-  {
-    status: 'Definite',
-    label: 'Definite',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    dot: 'bg-blue-400',
-    count_bg: 'bg-blue-100 text-blue-700',
-  },
-  {
-    status: 'Actual',
-    label: 'Actual',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
-    dot: 'bg-emerald-400',
-    count_bg: 'bg-emerald-100 text-emerald-700',
-  },
-  {
-    status: 'Cancel',
-    label: 'Cancel',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
-    dot: 'bg-red-400',
-    count_bg: 'bg-red-100 text-red-700',
-  },
+const STATUS_SUMMARY: { status: OrderStatus; label: string; dot: string }[] = [
+  { status: 'Tentative', label: 'Tentative', dot: 'bg-amber-400' },
+  { status: 'Definite', label: 'Definite', dot: 'bg-blue-400' },
+  { status: 'Actual', label: 'Actual', dot: 'bg-emerald-400' },
+  { status: 'Cancel', label: 'Cancel', dot: 'bg-red-400' },
 ]
 
 export default async function OrdersPage() {
@@ -65,9 +30,9 @@ export default async function OrdersPage() {
       {/* Page Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Pipeline Order</h1>
+          <h1 className="text-2xl font-bold text-slate-800">LOA Orders</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            {totalActive} order aktif · {orders.length} total
+            {totalActive} order aktif · {orders.length} total · pilih order untuk membuat LoA
           </p>
         </div>
         {user.permissions['orders.create'] && (
@@ -82,7 +47,7 @@ export default async function OrdersPage() {
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {PIPELINE_COLUMNS.map(({ status, label, dot, count_bg }) => {
+        {STATUS_SUMMARY.map(({ status, label, dot }) => {
           const count = orders.filter((o) => o.status === status).length
           return (
             <div key={status} className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm">
@@ -96,39 +61,8 @@ export default async function OrdersPage() {
         })}
       </div>
 
-      {/* Pipeline Board */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {PIPELINE_COLUMNS.map(({ status, label, bg, border, dot, count_bg }) => {
-          const col = orders.filter((o) => o.status === status)
-          return (
-            <div key={status} className="flex flex-col gap-3">
-              {/* Column header */}
-              <div className={`flex items-center justify-between rounded-xl border px-4 py-2.5 ${bg} ${border}`}>
-                <div className="flex items-center gap-2">
-                  <span className={`h-2 w-2 rounded-full ${dot}`} />
-                  <span className="text-sm font-bold text-slate-700">{label}</span>
-                </div>
-                <span className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${count_bg}`}>
-                  {col.length}
-                </span>
-              </div>
-
-              {/* Cards */}
-              <div className="space-y-2 min-h-[120px]">
-                {col.length === 0 ? (
-                  <div className={`rounded-xl border-2 border-dashed ${border} p-6 text-center`}>
-                    <p className="text-xs text-slate-400">Tidak ada order</p>
-                  </div>
-                ) : (
-                  col.map((order) => (
-                    <PipelineCard key={order.id} order={order} />
-                  ))
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      {/* Orders table */}
+      <LoaOrdersTable orders={orders} />
     </div>
   )
 }

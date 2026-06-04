@@ -15,8 +15,7 @@ import type { AppUser } from '@/types/domain'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
-  '/orders': 'Orders',
-  '/loa': 'LoA',
+  '/orders': 'LOA Orders',
   '/leads': 'Leads',
   '/reports': 'Reports',
   '/targets': 'Targets',

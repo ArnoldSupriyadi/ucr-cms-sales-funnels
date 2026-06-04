@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
-  CalendarDays,
   Users,
   FileText,
   BarChart3,
@@ -34,10 +33,9 @@ const NAV_GROUPS: {
   {
     label: 'MAIN MENU',
     items: [
-      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: null },
-      { href: '/orders',    label: 'Orders',    icon: CalendarDays,    permission: null },
-      { href: '/loa',       label: 'LoA',       icon: FileText,        permission: null },
-      { href: '/leads',     label: 'Leads',     icon: Users,           permission: null },
+      { href: '/dashboard', label: 'Dashboard',  icon: LayoutDashboard, permission: null },
+      { href: '/orders',    label: 'LOA Orders', icon: FileText,        permission: null },
+      { href: '/leads',     label: 'Leads',      icon: Users,           permission: null },
     ],
   },
   {
