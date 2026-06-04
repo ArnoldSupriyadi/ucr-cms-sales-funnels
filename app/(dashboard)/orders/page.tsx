@@ -17,13 +17,21 @@ export default async function OrdersPage() {
   const [supabase, user] = await Promise.all([createClient(), getAppUser()])
   if (!user) return null
 
-  const { data } = await supabase
-    .from('orders')
-    .select('*, leads(id, company_name, segmen)')
-    .order('event_date', { ascending: true })
+  const [{ data }, { data: loaRows }] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('*, leads(id, company_name, segmen)')
+      .order('event_date', { ascending: true }),
+    supabase.from('loa').select('booking_id, status'),
+  ])
 
   const orders = (data ?? []) as OrderWithLead[]
   const totalActive = orders.filter((o) => o.status !== 'Cancel').length
+
+  // Status LoA per order (booking_id) — untuk badge di tabel
+  const loaStatusByOrder = new Map<string, string>(
+    (loaRows ?? []).map((r) => [r.booking_id as string, r.status as string])
+  )
 
   return (
     <div className="space-y-6">
@@ -62,7 +70,7 @@ export default async function OrdersPage() {
       </div>
 
       {/* Orders table */}
-      <LoaOrdersTable orders={orders} />
+      <LoaOrdersTable orders={orders} loaStatusByOrder={loaStatusByOrder} />
     </div>
   )
 }
