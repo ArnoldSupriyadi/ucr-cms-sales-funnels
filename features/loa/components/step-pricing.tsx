@@ -20,22 +20,35 @@ export function StepPricing() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label className="text-xs text-slate-500">Service Charge (%)</Label>
-            <Input type="number" value={pricing.scPct}
-              onChange={(e) => dispatch({ type: 'SET_PRICING_FIELD', field: 'scPct', value: Number(e.target.value) })} />
-            <p className="text-[11px] text-slate-400">default 5% · editable</p>
+            <Input type="number" value={pricing.scPct} readOnly className="bg-slate-50 text-slate-500" />
+            <p className="text-[11px] text-slate-400">mengikuti Tipe Order · read-only</p>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-slate-500">Handling Fee (%)</Label>
-            <Input type="number" value={pricing.handlingPct}
-              onChange={(e) => dispatch({ type: 'SET_PRICING_FIELD', field: 'handlingPct', value: Number(e.target.value) })} />
-            <p className="text-[11px] text-slate-400">default 15% · editable</p>
+            <Label className="text-xs text-slate-500">PB1 (%)</Label>
+            <Input type="number" value={10} readOnly className="bg-slate-50 text-slate-500" />
+            <p className="text-[11px] text-slate-400">fixed 10% · read-only</p>
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-xs text-slate-500">PB1 (%)</Label>
-          <Input type="number" value={10} readOnly className="bg-slate-50 text-slate-500" />
-          <p className="text-[11px] text-slate-400">fixed 10% · read-only</p>
+        <div className="space-y-2.5">
+          <Label className="text-xs text-slate-500">Handling Fee</Label>
+          <RadioGroup
+            value={pricing.handlingType}
+            onValueChange={(v) => dispatch({ type: 'SET_PRICING_FIELD', field: 'handlingType', value: v })}
+            className="flex gap-5"
+          >
+            <label className="flex items-center gap-2 text-sm">
+              <RadioGroupItem value="percent" /> Percent (%)
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <RadioGroupItem value="flat" /> Flat (Rp)
+            </label>
+          </RadioGroup>
+          <Input type="number" value={pricing.handlingValue}
+            onChange={(e) => dispatch({ type: 'SET_PRICING_FIELD', field: 'handlingValue', value: Number(e.target.value) })} />
+          <p className="text-[11px] text-slate-400">
+            {pricing.handlingType === 'percent' ? '% dari Sub Total 2' : 'nilai Rupiah langsung'} · default 15%
+          </p>
         </div>
 
         <div>
