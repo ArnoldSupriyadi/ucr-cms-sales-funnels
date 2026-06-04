@@ -258,6 +258,8 @@ export type Database = {
           event_time: string | null
           event_name: string | null
           event_type: string | null
+          order_type: string | null
+          order_category: string | null
           venue: string | null
           pax: number
           segmen: Database['public']['Enums']['segmen_enum'] | null
@@ -277,6 +279,8 @@ export type Database = {
           event_time?: string | null
           event_name?: string | null
           event_type?: string | null
+          order_type?: string | null
+          order_category?: string | null
           venue?: string | null
           pax: number
           segmen?: Database['public']['Enums']['segmen_enum'] | null
@@ -296,6 +300,8 @@ export type Database = {
           event_time?: string | null
           event_name?: string | null
           event_type?: string | null
+          order_type?: string | null
+          order_category?: string | null
           venue?: string | null
           pax?: number
           segmen?: Database['public']['Enums']['segmen_enum'] | null
@@ -371,6 +377,8 @@ export type Database = {
           setup_location: string | null
           service_charge_pct: number
           handling_fee_pct: number
+          handling_fee_type: string
+          handling_fee_value: number
           discount: number
           discount_type: string
           discount_value: number
@@ -399,6 +407,8 @@ export type Database = {
           setup_location?: string | null
           service_charge_pct?: number
           handling_fee_pct?: number
+          handling_fee_type?: string
+          handling_fee_value?: number
           discount?: number
           discount_type?: string
           discount_value?: number
@@ -427,6 +437,8 @@ export type Database = {
           setup_location?: string | null
           service_charge_pct?: number
           handling_fee_pct?: number
+          handling_fee_type?: string
+          handling_fee_value?: number
           discount?: number
           discount_type?: string
           discount_value?: number
