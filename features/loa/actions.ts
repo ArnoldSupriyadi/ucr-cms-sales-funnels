@@ -6,6 +6,7 @@ import { getAppUser } from '@/lib/auth/permissions'
 import { generateLoaDocNo } from '@/lib/loa/doc-no'
 import { calculateLoa } from '@/lib/loa/calculations'
 import { generateMenuDetail } from '@/lib/loa/menu-detail'
+import { serviceChargePctForType } from '@/lib/constants/order-type'
 import type { ActionResult } from '@/types/domain'
 import type { LoaWizardState, SavedLoaDraft } from './types'
 
@@ -28,7 +29,7 @@ export async function saveLoaDraft(
   // Pastikan order ada & milik sales ini (lapis kedua di server)
   const { data: order } = await supabase
     .from('orders')
-    .select('id, sales_id')
+    .select('id, sales_id, order_type')
     .eq('id', orderId)
     .single()
   if (!order) return { success: false, error: 'Order tidak ditemukan' }
@@ -36,10 +37,16 @@ export async function saveLoaDraft(
     return { success: false, error: 'Bukan order Anda' }
   }
 
-  // Re-kalkulasi di server — sama persis dgn client (calculateLoa(items, pricing))
+  // Service Charge di-derive ulang dari tipe order (jangan percaya angka client).
+  const scPct = serviceChargePctForType(order.order_type)
+  if (scPct <= 0) {
+    return { success: false, error: 'Tipe order belum diisi — pilih tipe order dulu sebelum simpan LoA' }
+  }
+
+  // Re-kalkulasi di server dgn scPct dari tipe order + handling/diskon dari client
   const calc = calculateLoa(
     state.items.map((i) => ({ pricePerPax: i.pricePerPax, pax: i.pax })),
-    state.pricing
+    { ...state.pricing, scPct }
   )
 
   // Cek LoA existing (1:1 dengan order)
@@ -56,8 +63,10 @@ export async function saveLoaDraft(
     doc_no: docNo,
     status: 'draft' as const,
     setup_location: state.detail.setupLocation || null,
-    service_charge_pct: state.pricing.scPct,
-    handling_fee_pct: state.pricing.handlingPct,
+    service_charge_pct: scPct,
+    handling_fee_type: state.pricing.handlingType,
+    handling_fee_value: state.pricing.handlingValue,
+    handling_fee_pct: state.pricing.handlingType === 'percent' ? state.pricing.handlingValue : 0,
     discount_type: state.pricing.discountType,
     discount_value: state.pricing.discountValue,
     discount: calc.discountAmt,
@@ -140,7 +149,7 @@ export async function getLoaForEdit(orderId: string): Promise<SavedLoaDraft | nu
   const { data: loa } = await supabase
     .from('loa')
     .select(
-      'id, setup_location, service_charge_pct, handling_fee_pct, discount_type, discount_value, loa_items(id, package_name, price_per_pax, pax, sort_order, loa_item_selections(component_name, occasion_no, category_name, item_name, sort_order))'
+      'id, setup_location, service_charge_pct, handling_fee_type, handling_fee_value, discount_type, discount_value, loa_items(id, package_name, price_per_pax, pax, sort_order, loa_item_selections(component_name, occasion_no, category_name, item_name, sort_order))'
     )
     .eq('booking_id', orderId)
     .maybeSingle()
@@ -189,8 +198,10 @@ export async function getLoaForEdit(orderId: string): Promise<SavedLoaDraft | nu
     setupLocation: loa.setup_location ?? '',
     items,
     pricing: {
+      // scPct di-override di page dari tipe order; nilai ini hanya fallback.
       scPct: Number(loa.service_charge_pct),
-      handlingPct: Number(loa.handling_fee_pct),
+      handlingType: loa.handling_fee_type === 'flat' ? 'flat' : 'percent',
+      handlingValue: Number(loa.handling_fee_value),
       discountEnabled: discountValue > 0,
       discountType: loa.discount_type === 'percent' ? 'percent' : 'flat',
       discountValue,
