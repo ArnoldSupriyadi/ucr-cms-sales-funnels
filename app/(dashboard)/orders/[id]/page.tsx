@@ -54,7 +54,7 @@ export default async function OrderDetailPage({
   const nextStatuses = ORDER_STATUS_TRANSITIONS[order.status]
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 w-full">
       {/* Banner: order baru dibuat → ajak buat LoA */}
       {created && (
         <div className="flex flex-col gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">

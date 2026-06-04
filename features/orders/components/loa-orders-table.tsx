@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { ORDER_STATUS_COLORS } from '@/lib/constants/status'
 import { formatDate } from '@/lib/utils/format'
-import { FileText, ChevronRight } from 'lucide-react'
+import { FileText, ChevronRight, Eye } from 'lucide-react'
 import type { OrderWithLead } from '@/types/domain'
 
 interface LoaOrdersTableProps {
@@ -70,9 +70,10 @@ export function LoaOrdersTable({ orders, loaStatusByOrder }: LoaOrdersTableProps
             return (
             <tr key={order.id} className="transition-colors hover:bg-slate-50/60">
               <td className="px-4 py-3">
-                <Link href={`/orders/${order.id}`} className="block">
-                  <span className="font-medium text-slate-900 hover:text-indigo-600">
+                <Link href={`/orders/${order.id}`} className="group block w-fit">
+                  <span className="inline-flex items-center gap-1 font-medium text-slate-900 underline decoration-slate-300 decoration-dashed underline-offset-4 transition-colors group-hover:text-indigo-600 group-hover:decoration-indigo-400">
                     {order.event_name || order.order_no}
+                    <Eye className="h-3.5 w-3.5 text-slate-300 transition-colors group-hover:text-indigo-500" />
                   </span>
                   <span className="mt-0.5 block font-mono text-xs text-slate-400">
                     {order.order_no}
@@ -95,15 +96,24 @@ export function LoaOrdersTable({ orders, loaStatusByOrder }: LoaOrdersTableProps
                   {loaLabel}
                 </Badge>
               </td>
-              <td className="px-4 py-3 text-right">
-                <Link
-                  href={`/orders/${order.id}/loa`}
-                  className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition-colors hover:bg-indigo-100"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                  {actionLabel}
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Link>
+              <td className="px-4 py-3">
+                <div className="flex items-center justify-end gap-2">
+                  <Link
+                    href={`/orders/${order.id}`}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Detail
+                  </Link>
+                  <Link
+                    href={`/orders/${order.id}/loa`}
+                    className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 transition-colors hover:bg-indigo-100"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    {actionLabel}
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
               </td>
             </tr>
             )
