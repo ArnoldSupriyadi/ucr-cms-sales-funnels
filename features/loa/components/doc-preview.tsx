@@ -1,6 +1,8 @@
 'use client'
 
 import Image from 'next/image'
+import { Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useLoaForm } from '../loa-form-context'
 import { UMARA_COMPANY } from '../company'
 import { hariID, tanggalID } from '@/lib/utils/date-id'
@@ -12,8 +14,32 @@ export function DocPreview() {
   const { client } = meta
   const sales = salesUsers.find((u) => u.id === detail.salesId)
 
+  function handleDownload() {
+    // Nama file: LOA-<klien> - DD-MM-YYYY (hari ini). Buang karakter ilegal nama file.
+    const safeClient = (client.name || 'Klien').replace(/[\\/:*?"<>|]/g, '').trim()
+    const now = new Date()
+    const dd = String(now.getDate()).padStart(2, '0')
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const filename = `LOA-${safeClient} - ${dd}-${mm}-${now.getFullYear()}`
+
+    const prevTitle = document.title
+    const restore = () => {
+      document.title = prevTitle
+      window.removeEventListener('afterprint', restore)
+    }
+    window.addEventListener('afterprint', restore)
+    document.title = filename
+    window.print()
+  }
+
   return (
     <div className={styles.wrap}>
+      <div className={styles.toolbar}>
+        <Button type="button" onClick={handleDownload} className="gap-2">
+          <Download className="h-4 w-4" />
+          Download PDF
+        </Button>
+      </div>
       <div className={styles.paper}>
         <div className={styles.kop}>
           <Image src={UMARA_COMPANY.logo} alt={UMARA_COMPANY.brandName} width={140} height={116}
