@@ -9,15 +9,7 @@ import {
   SheetTrigger,
   SheetFooter,
 } from '@/components/ui/sheet'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { PackageCombobox } from './package-combobox'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -183,39 +175,24 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
     >
       <SheetTrigger asChild>{trigger ?? <Button>+ Tambah Item</Button>}</SheetTrigger>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
-        <SheetHeader className="border-b px-5 py-4">
-          <SheetTitle>Tambah Item LoA</SheetTitle>
+        <SheetHeader className="bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-4">
+          <SheetTitle className="text-white">🍽️ Tambah Item LoA</SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {/* Paket */}
           <div className="space-y-1.5">
             <Label>Paket</Label>
-            <Select value={packageId} onValueChange={handlePackageChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih paket..." />
-              </SelectTrigger>
-              <SelectContent>
-                {packagesByKategori.map(([kategori, pkgs]) => (
-                  <SelectGroup key={kategori}>
-                    <SelectLabel>{kategori}</SelectLabel>
-                    {pkgs.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.namaPaket}
-                        {p.hasSelection && (
-                          <span className="ml-1 text-[11px] text-green-600">●</span>
-                        )}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
+            <PackageCombobox
+              packagesByKategori={packagesByKategori}
+              value={packageId}
+              onChange={handlePackageChange}
+            />
           </div>
 
           {pkg && (
-            <div className="flex gap-3">
-              <div className="flex-1 space-y-1.5">
+            <>
+              <div className="space-y-1.5">
                 <Label htmlFor="pax">Pax</Label>
                 <Input
                   id="pax"
@@ -224,9 +201,10 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
                   value={pax}
                   onChange={(e) => setPax(e.target.value)}
                   placeholder="0"
+                  className="w-full"
                 />
               </div>
-              <div className="flex-1 space-y-1.5">
+              <div className="space-y-1.5">
                 <Label htmlFor="price">Harga / pax</Label>
                 <Input
                   id="price"
@@ -235,9 +213,10 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
                   value={pricePerPax}
                   onChange={(e) => setPricePerPax(e.target.value)}
                   placeholder="0"
+                  className="w-full"
                 />
               </div>
-            </div>
+            </>
           )}
 
           {pkg && !pkg.hasSelection && (
@@ -246,7 +225,7 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
             </p>
           )}
 
-          {occasions.map((occ) => {
+          {occasions.map((occ, occIdx) => {
             const errorIds = new Set(
               errors
                 .filter((e) => e.categoryId.startsWith(`${occ.key}#`))
@@ -262,12 +241,13 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
                 value={selections[occ.key] ?? {}}
                 onChange={(catId, ids) => setItemIds(occ.key, catId, ids)}
                 errorIds={errorIds}
+                accentIndex={occIdx}
               />
             )
           })}
         </div>
 
-        <SheetFooter className="border-t px-5 py-4">
+        <SheetFooter className="border-t bg-slate-50 px-5 py-4">
           {pkg?.hasSelection && (
             <div className="mb-1 w-full">
               <div className="text-[11px] font-medium text-slate-500">Preview menu terpilih</div>
@@ -294,6 +274,7 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
               {amount > 0 ? formatRupiah(amount) : '—'}
             </span>
             <Button
+              className="bg-gradient-to-r from-indigo-500 to-violet-500 font-semibold hover:from-indigo-600 hover:to-violet-600"
               disabled={!canSave}
               onClick={() => {
                 if (!pkg) return
