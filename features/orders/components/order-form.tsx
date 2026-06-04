@@ -70,7 +70,7 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
     toast.success(order ? 'Order diperbarui' : 'Order dibuat')
     if (!order && result.success) {
       const data = result.data as { id: string; order_no: string }
-      router.push(`/orders/${data.id}`)
+      router.push(`/orders/${data.id}?created=1`)
     } else {
       router.push(`/orders/${order?.id}`)
     }

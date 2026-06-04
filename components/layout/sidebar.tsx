@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   CalendarDays,
   Users,
+  FileText,
   BarChart3,
   Target,
   Database,
@@ -35,6 +36,7 @@ const NAV_GROUPS: {
     items: [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: null },
       { href: '/orders',    label: 'Orders',    icon: CalendarDays,    permission: null },
+      { href: '/loa',       label: 'LoA',       icon: FileText,        permission: null },
       { href: '/leads',     label: 'Leads',     icon: Users,           permission: null },
     ],
   },

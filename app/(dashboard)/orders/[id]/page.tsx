@@ -10,15 +10,28 @@ import { StatusChangeActions } from '@/features/orders/components/status-change-
 import { ORDER_STATUS_COLORS, ORDER_STATUS_TRANSITIONS } from '@/lib/constants/status'
 import { SEGMEN_COLORS } from '@/lib/constants/segmen'
 import { formatDate } from '@/lib/utils/format'
-import { Pencil, CalendarDays, Users, MapPin, AlertTriangle, Clock } from 'lucide-react'
+import {
+  Pencil,
+  CalendarDays,
+  Users,
+  MapPin,
+  AlertTriangle,
+  Clock,
+  FileText,
+  CheckCircle2,
+  ChevronRight,
+} from 'lucide-react'
 import type { OrderWithDetails } from '@/types/domain'
 
 export default async function OrderDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ created?: string }>
 }) {
   const { id } = await params
+  const { created } = await searchParams
   const [supabase, user] = await Promise.all([createClient(), getAppUser()])
   if (!user) return null
 
@@ -41,6 +54,33 @@ export default async function OrderDetailPage({
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {/* Banner: order baru dibuat → ajak buat LoA */}
+      {created && (
+        <div className="flex flex-col gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-sm text-green-800">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+            <span>
+              <b>Order berhasil dibuat.</b> Lanjut lengkapi dokumen LoA?
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href={`/orders/${id}/loa`}>
+              <Button size="sm" className="gap-1.5 bg-green-600 hover:bg-green-700">
+                <FileText className="h-3.5 w-3.5" />
+                Buat LoA
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+            <Link
+              href={`/orders/${id}`}
+              className="text-sm font-medium text-green-700 hover:underline"
+            >
+              Nanti saja
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -179,10 +219,28 @@ export default async function OrderDetailPage({
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Dokumen</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-3">
+            <CardContent className="space-y-3">
+              {/* LoA — aksi utama */}
+              <Link
+                href={`/orders/${id}/loa`}
+                className="flex items-center gap-3 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 transition-colors hover:bg-indigo-50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
+                  <FileText className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-slate-900">LoA</p>
+                  <p className="text-xs text-slate-500">Letter of Agreement</p>
+                </div>
+                <Button size="sm" className="gap-1.5 bg-indigo-500 hover:bg-indigo-600">
+                  Buat LoA
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+
+              {/* IB & BEO — sekunder */}
+              <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'LoA', href: `/orders/${id}/loa`, desc: 'Letter of Agreement' },
                   { label: 'IB', href: `/orders/${id}/ib`, desc: 'Internal Breakdown' },
                   { label: 'BEO', href: `/orders/${id}/beo`, desc: 'Banquet Event Order' },
                 ].map((doc) => (
