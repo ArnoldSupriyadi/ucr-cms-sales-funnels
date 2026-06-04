@@ -4,7 +4,7 @@ export const ORDER_TYPES: Record<OrderTypeKey, { label: string; scPct: number; c
   Package: {
     label: 'Package Order',
     scPct: 5,
-    categories: ['Box Package', 'Gift Box'],
+    categories: ['Box Package (Nasi/Snack/Bento/Longbox)', 'Gift Box (Tumpeng/Bakul/Hampers/Dropfood)'],
   },
   Event: {
     label: 'Event Order',

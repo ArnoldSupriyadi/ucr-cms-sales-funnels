@@ -13,7 +13,10 @@ describe('order-type konstanta', () => {
     expect(serviceChargePctForType('Xxx' as never)).toBe(0)
   })
   it('kategori per tipe', () => {
-    expect(categoriesForType('Package')).toEqual(['Box Package', 'Gift Box'])
+    expect(categoriesForType('Package')).toEqual([
+      'Box Package (Nasi/Snack/Bento/Longbox)',
+      'Gift Box (Tumpeng/Bakul/Hampers/Dropfood)',
+    ])
     expect(categoriesForType('Event')).toContain('Canape')
     expect(categoriesForType(null)).toEqual([])
   })
