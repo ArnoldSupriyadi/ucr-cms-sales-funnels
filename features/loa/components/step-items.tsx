@@ -43,14 +43,18 @@ export function StepItems({ catalog }: { catalog: MenuCatalog }) {
                 </div>
               </div>
               {lines.length > 0 && (
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-[12px] text-slate-600 marker:text-slate-300">
+                <div className="mt-2 space-y-2">
                   {lines.map((ln, idx) => (
-                    <li key={idx}>
-                      <span className="font-medium text-slate-700">{ln.group}:</span>{' '}
-                      <span>{ln.items.join(', ')}</span>
-                    </li>
+                    <div key={idx}>
+                      <div className="text-[12px] font-semibold text-slate-700">{ln.group}</div>
+                      <ul className="mt-0.5 list-disc space-y-0.5 pl-5 text-[12px] text-slate-600 marker:text-slate-300">
+                        {ln.items.map((item, i) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
           )
