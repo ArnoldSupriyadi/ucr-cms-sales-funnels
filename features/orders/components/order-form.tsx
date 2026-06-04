@@ -13,6 +13,12 @@ import { Separator } from '@/components/ui/separator'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { SEGMEN_OPTIONS } from '@/lib/constants/segmen'
+import {
+  ORDER_TYPE_KEYS,
+  ORDER_TYPES,
+  categoriesForType,
+  serviceChargePctForType,
+} from '@/lib/constants/order-type'
 import { createOrder, updateOrder } from '../actions'
 import type { Order, Lead, SegmenEnum } from '@/types/domain'
 
@@ -26,6 +32,8 @@ const FIELD_LABELS: Record<string, string> = {
   leadId: 'Klien',
   eventDate: 'Tanggal Event',
   pax: 'Jumlah Pax',
+  orderType: 'Tipe Order',
+  orderCategory: 'Kategori',
   exceptionReason: 'Alasan Pengecualian',
 }
 
@@ -41,7 +49,8 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
   const [eventName, setEventName] = useState(order?.event_name ?? '')
   const [eventDate, setEventDate] = useState(order?.event_date ?? '')
   const [eventTime, setEventTime] = useState(order?.event_time ?? '')
-  const [eventType, setEventType] = useState(order?.event_type ?? '')
+  const [orderType, setOrderType] = useState(order?.order_type ?? '')
+  const [orderCategory, setOrderCategory] = useState(order?.order_category ?? '')
   const [venue, setVenue] = useState(order?.venue ?? '')
   const [pax, setPax] = useState(String(order?.pax ?? ''))
   const [segmen, setSegmen] = useState(order?.segmen ?? '')
@@ -51,6 +60,15 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
   const leadOptions: ComboboxOption[] = leads.map((l) => ({
     value: l.id,
     label: l.company_name,
+  }))
+
+  const orderTypeOptions: ComboboxOption[] = ORDER_TYPE_KEYS.map((k) => ({
+    value: k,
+    label: ORDER_TYPES[k].label,
+  }))
+  const categoryOptions: ComboboxOption[] = categoriesForType(orderType).map((c) => ({
+    value: c,
+    label: c,
   }))
 
   function clearError(key: string) {
@@ -69,6 +87,8 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
     const paxNum = parseInt(pax, 10)
     if (!pax || Number.isNaN(paxNum) || paxNum < 1)
       e.pax = 'Jumlah pax wajib diisi (minimal 1)'
+    if (!orderType) e.orderType = 'Tipe order wajib dipilih'
+    else if (!orderCategory) e.orderCategory = 'Kategori wajib dipilih'
     if (isException && !exceptionReason.trim())
       e.exceptionReason = 'Alasan pengecualian wajib diisi'
     return e
@@ -91,7 +111,8 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
       event_name: eventName || null,
       event_date: eventDate,
       event_time: eventTime || null,
-      event_type: eventType || null,
+      order_type: orderType || null,
+      order_category: orderCategory || null,
       venue: venue || null,
       pax: parseInt(pax, 10),
       segmen: (segmen || null) as SegmenEnum | null,
@@ -246,24 +267,68 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="event_type">Jenis Event</Label>
-              <Input
-                id="event_type"
-                value={eventType}
-                onChange={(e) => setEventType(e.target.value)}
-                placeholder="Seminar, Meeting, dll"
+              <Label htmlFor="order_type">
+                Tipe Order <span className="text-red-500">*</span>
+              </Label>
+              <Combobox
+                id="order_type"
+                options={orderTypeOptions}
+                value={orderType}
+                onChange={(v) => {
+                  setOrderType(v)
+                  setOrderCategory('')
+                  clearError('orderType')
+                  clearError('orderCategory')
+                }}
+                placeholder="Pilih tipe order..."
+                searchPlaceholder="Cari tipe..."
+                emptyText="Tipe tidak ditemukan."
+                error={!!errors.orderType}
               />
+              {errors.orderType && <p className="text-xs text-red-500">{errors.orderType}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="venue">Venue / Lokasi</Label>
-              <Textarea
-                id="venue"
-                value={venue}
-                onChange={(e) => setVenue(e.target.value)}
-                rows={2}
-                placeholder="Nama gedung, alamat venue"
+              <Label htmlFor="order_category">
+                Kategori <span className="text-red-500">*</span>
+              </Label>
+              <Combobox
+                id="order_category"
+                options={categoryOptions}
+                value={orderCategory}
+                onChange={(v) => {
+                  setOrderCategory(v)
+                  clearError('orderCategory')
+                }}
+                placeholder={orderType ? 'Pilih kategori...' : 'Pilih tipe dulu'}
+                searchPlaceholder="Cari kategori..."
+                emptyText="Kategori tidak ditemukan."
+                error={!!errors.orderCategory}
+                disabled={!orderType}
               />
+              {errors.orderCategory && (
+                <p className="text-xs text-red-500">{errors.orderCategory}</p>
+              )}
             </div>
+          </div>
+          {orderType && (
+            <p className="text-xs text-slate-500">
+              Service Charge:{' '}
+              <span className="font-medium text-slate-700">
+                {serviceChargePctForType(orderType)}%
+              </span>{' '}
+              (mengikuti tipe order, otomatis di LoA)
+            </p>
+          )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="venue">Venue / Lokasi</Label>
+            <Textarea
+              id="venue"
+              value={venue}
+              onChange={(e) => setVenue(e.target.value)}
+              rows={2}
+              placeholder="Nama gedung, alamat venue"
+            />
           </div>
         </section>
 
