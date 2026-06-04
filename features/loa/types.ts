@@ -59,8 +59,9 @@ export interface LoaDetailDraft {
   salesId: string
 }
 export interface LoaPricingDraft {
-  scPct: number
-  handlingPct: number
+  scPct: number                 // read-only di UI, diturunkan dari tipe order
+  handlingType: 'percent' | 'flat'
+  handlingValue: number
   discountEnabled: boolean
   discountType: 'percent' | 'flat'
   discountValue: number
@@ -80,7 +81,8 @@ export interface SavedLoaDraft {
 
 export const DEFAULT_PRICING: LoaPricingDraft = {
   scPct: 5,
-  handlingPct: 15,
+  handlingType: 'percent',
+  handlingValue: 15,
   discountEnabled: false,
   discountType: 'flat',
   discountValue: 0,
