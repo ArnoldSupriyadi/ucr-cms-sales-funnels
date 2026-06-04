@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatRupiah } from '@/lib/utils/format'
-import { generateMenuDetail } from '@/lib/loa/menu-detail'
+import { groupSelectionLines } from '@/lib/loa/menu-detail-lines'
 import { saveLoaDraft } from '../actions'
 import { useLoaForm } from '../loa-form-context'
 
@@ -41,15 +41,29 @@ export function StepReview() {
           <p className="font-semibold">Item ({items.length}):</p>
           <ul className="mt-1 list-disc space-y-1 pl-5">
             {items.length === 0 && <li className="text-slate-400">—</li>}
-            {items.map((i) => (
-              <li key={i.key}>
-                {i.packageName} — {i.pax} pax × {formatRupiah(i.pricePerPax)} ={' '}
-                <b>{formatRupiah(i.pax * i.pricePerPax)}</b>
-                {i.selections.length > 0 && (
-                  <div className="text-[12px] text-slate-500">{generateMenuDetail(i.selections)}</div>
-                )}
-              </li>
-            ))}
+            {items.map((i) => {
+              const lines = groupSelectionLines(i.selections)
+              return (
+                <li key={i.key}>
+                  {i.packageName} — {i.pax} pax × {formatRupiah(i.pricePerPax)} ={' '}
+                  <b>{formatRupiah(i.pax * i.pricePerPax)}</b>
+                  {lines.length > 0 && (
+                    <div className="mt-1 space-y-1.5">
+                      {lines.map((ln, idx) => (
+                        <div key={idx}>
+                          <div className="text-[12px] font-semibold text-slate-600">{ln.group}</div>
+                          <ul className="mt-0.5 list-disc space-y-0.5 pl-5 text-[12px] text-slate-500 marker:text-slate-300">
+                            {ln.items.map((item, j) => (
+                              <li key={j}>{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </div>
         <p>
