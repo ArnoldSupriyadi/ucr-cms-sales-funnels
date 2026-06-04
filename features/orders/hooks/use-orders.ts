@@ -16,7 +16,7 @@ export function useOrders() {
       setLoading(true)
       const { data, error } = await supabase
         .from('orders')
-        .select('*, leads(id, company_name, segmen), users(id, name)')
+        .select('*, leads(id, company_name, segmen), users!orders_sales_id_fkey(id, name)')
         .order('event_date', { ascending: true })
 
       if (error) {

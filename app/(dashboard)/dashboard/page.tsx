@@ -38,7 +38,7 @@ export default async function DashboardPage() {
       .gte('created_at', startOfMonth),
     supabase
       .from('orders')
-      .select('id, status, event_date, event_name, created_at, leads(company_name), users(name)')
+      .select('id, status, event_date, event_name, created_at, leads(company_name), users!orders_sales_id_fkey(name)')
       .order('created_at', { ascending: false })
       .limit(10),
   ])

@@ -40,7 +40,7 @@ export default async function OrderDetailPage({
     .select(`
       *,
       leads(*, lead_contacts(*)),
-      users(id, name),
+      users!orders_sales_id_fkey(id, name),
       order_status_logs(*)
     `)
     .eq('id', id)

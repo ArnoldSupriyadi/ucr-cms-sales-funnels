@@ -19,7 +19,7 @@ export default async function OrdersPage() {
 
   const { data } = await supabase
     .from('orders')
-    .select('*, leads(id, company_name, segmen), users(id, name)')
+    .select('*, leads(id, company_name, segmen)')
     .order('event_date', { ascending: true })
 
   const orders = (data ?? []) as OrderWithLead[]
