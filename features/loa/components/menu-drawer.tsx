@@ -26,7 +26,7 @@ import {
   validateCategorySelections,
   type CategorySelectionState,
 } from '@/lib/loa/selection-rules'
-import { generateMenuDetail } from '@/lib/loa/menu-detail'
+import { groupSelectionLines } from '@/lib/loa/menu-detail-lines'
 import { formatRupiah } from '@/lib/utils/format'
 import type { CatalogCategory, MenuCatalog, LoaItemDraft, DraftSelection } from '../types'
 
@@ -116,7 +116,7 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
   const errors = validateCategorySelections(validationStates)
   const erroredCompositeKeys = new Set(errors.map((e) => e.categoryId))
 
-  const previewText = useMemo(() => {
+  const previewLines = useMemo(() => {
     const sels = []
     for (const occ of occasions) {
       const slice = selections[occ.key] ?? {}
@@ -134,7 +134,7 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
         }
       }
     }
-    return generateMenuDetail(sels)
+    return groupSelectionLines(sels)
   }, [occasions, selections])
 
   const paxNum = Number(pax)
@@ -270,10 +270,23 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
         <SheetFooter className="border-t px-5 py-4">
           {pkg?.hasSelection && (
             <div className="mb-1 w-full">
-              <div className="text-[11px] font-medium text-slate-500">Preview menu_detail (auto)</div>
-              <div className="mt-0.5 line-clamp-2 text-[12px] text-slate-600">
-                {previewText || <span className="text-slate-400">— belum ada pilihan —</span>}
-              </div>
+              <div className="text-[11px] font-medium text-slate-500">Preview menu terpilih</div>
+              {previewLines.length > 0 ? (
+                <div className="mt-1 max-h-28 space-y-1.5 overflow-y-auto pr-1">
+                  {previewLines.map((ln, idx) => (
+                    <div key={idx}>
+                      <div className="text-[12px] font-semibold text-slate-600">{ln.group}</div>
+                      <ul className="mt-0.5 list-disc space-y-0.5 pl-5 text-[12px] text-slate-500 marker:text-slate-300">
+                        {ln.items.map((item, j) => (
+                          <li key={j}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-0.5 text-[12px] text-slate-400">— belum ada pilihan —</div>
+              )}
             </div>
           )}
           <div className="flex w-full items-center justify-between">
