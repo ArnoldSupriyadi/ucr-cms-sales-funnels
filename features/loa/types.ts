@@ -71,6 +71,13 @@ export interface LoaWizardState {
   pricing: LoaPricingDraft
 }
 
+/** Subset draft LoA yang dipersist & dimuat ulang dari DB (detail lain bersumber dari order). */
+export interface SavedLoaDraft {
+  setupLocation: string
+  items: LoaItemDraft[]
+  pricing: LoaPricingDraft
+}
+
 export const DEFAULT_PRICING: LoaPricingDraft = {
   scPct: 5,
   handlingPct: 15,

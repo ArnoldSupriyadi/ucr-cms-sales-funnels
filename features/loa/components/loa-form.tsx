@@ -3,7 +3,13 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { LoaFormProvider, useLoaForm } from '../loa-form-context'
-import type { InitialLoaData, MenuCatalog, SalesUser } from '../types'
+import type {
+  InitialLoaData,
+  LoaItemDraft,
+  LoaPricingDraft,
+  MenuCatalog,
+  SalesUser,
+} from '../types'
 import { LoaStepper } from './loa-stepper'
 import { StepDetail } from './step-detail'
 import { StepItems } from './step-items'
@@ -13,14 +19,30 @@ import { PricePanel } from './price-panel'
 import { DocPreview } from './doc-preview'
 
 interface LoaFormProps {
+  orderId: string
   initial: InitialLoaData
   salesUsers: SalesUser[]
   catalog: MenuCatalog
+  initialItems?: LoaItemDraft[]
+  initialPricing?: LoaPricingDraft
 }
 
-export function LoaForm({ initial, salesUsers, catalog }: LoaFormProps) {
+export function LoaForm({
+  orderId,
+  initial,
+  salesUsers,
+  catalog,
+  initialItems,
+  initialPricing,
+}: LoaFormProps) {
   return (
-    <LoaFormProvider initial={initial} salesUsers={salesUsers}>
+    <LoaFormProvider
+      orderId={orderId}
+      initial={initial}
+      salesUsers={salesUsers}
+      initialItems={initialItems}
+      initialPricing={initialPricing}
+    >
       <LoaFormBody catalog={catalog} />
     </LoaFormProvider>
   )

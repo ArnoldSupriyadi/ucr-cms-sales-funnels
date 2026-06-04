@@ -3,12 +3,20 @@
 import { createContext, useContext, useMemo, useReducer, type Dispatch, type ReactNode } from 'react'
 import { loaFormReducer, type LoaFormAction } from './loa-form-reducer'
 import { calculateLoa, type LoaCalcResult } from '@/lib/loa/calculations'
-import { DEFAULT_PRICING, type InitialLoaData, type LoaWizardState, type SalesUser } from './types'
+import {
+  DEFAULT_PRICING,
+  type InitialLoaData,
+  type LoaItemDraft,
+  type LoaPricingDraft,
+  type LoaWizardState,
+  type SalesUser,
+} from './types'
 
 interface LoaFormContextValue {
   state: LoaWizardState
   dispatch: Dispatch<LoaFormAction>
   calc: LoaCalcResult
+  orderId: string
   meta: { orderNo: string; client: InitialLoaData['client'] }
   salesUsers: SalesUser[]
 }
@@ -16,18 +24,24 @@ interface LoaFormContextValue {
 const LoaFormContext = createContext<LoaFormContextValue | null>(null)
 
 export function LoaFormProvider({
+  orderId,
   initial,
   salesUsers,
+  initialItems,
+  initialPricing,
   children,
 }: {
+  orderId: string
   initial: InitialLoaData
   salesUsers: SalesUser[]
+  initialItems?: LoaItemDraft[]
+  initialPricing?: LoaPricingDraft
   children: ReactNode
 }) {
   const [state, dispatch] = useReducer(loaFormReducer, {
     detail: initial.detail,
-    items: [],
-    pricing: { ...DEFAULT_PRICING },
+    items: initialItems ?? [],
+    pricing: initialPricing ?? { ...DEFAULT_PRICING },
   })
 
   const calc = useMemo(
@@ -40,8 +54,15 @@ export function LoaFormProvider({
   )
 
   const value = useMemo<LoaFormContextValue>(
-    () => ({ state, dispatch, calc, meta: { orderNo: initial.orderNo, client: initial.client }, salesUsers }),
-    [state, calc, initial.orderNo, initial.client, salesUsers],
+    () => ({
+      state,
+      dispatch,
+      calc,
+      orderId,
+      meta: { orderNo: initial.orderNo, client: initial.client },
+      salesUsers,
+    }),
+    [state, calc, orderId, initial.orderNo, initial.client, salesUsers],
   )
 
   return <LoaFormContext.Provider value={value}>{children}</LoaFormContext.Provider>
