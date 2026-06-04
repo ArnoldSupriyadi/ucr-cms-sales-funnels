@@ -28,10 +28,11 @@ import {
 } from '@/lib/loa/selection-rules'
 import { generateMenuDetail } from '@/lib/loa/menu-detail'
 import { formatRupiah } from '@/lib/utils/format'
-import type { CatalogCategory, MenuCatalog } from '../types'
+import type { CatalogCategory, MenuCatalog, LoaItemDraft, DraftSelection } from '../types'
 
 interface MenuDrawerProps {
   catalog: MenuCatalog
+  onAddItem: (item: LoaItemDraft) => void
   trigger?: React.ReactNode
 }
 
@@ -43,7 +44,7 @@ interface Occasion {
   categories: CatalogCategory[]
 }
 
-export function MenuDrawer({ catalog, trigger }: MenuDrawerProps) {
+export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
   const [open, setOpen] = useState(false)
   const [packageId, setPackageId] = useState('')
   const [pax, setPax] = useState('')
@@ -147,6 +148,29 @@ export function MenuDrawer({ catalog, trigger }: MenuDrawerProps) {
     setPax('')
     setPricePerPax('')
     setSelections({})
+  }
+
+  function buildSelections(): DraftSelection[] {
+    const out: DraftSelection[] = []
+    for (const occ of occasions) {
+      const slice = selections[occ.key] ?? {}
+      for (const cat of occ.categories) {
+        for (const itemId of slice[cat.id] ?? []) {
+          const item = cat.items.find((i) => i.id === itemId)
+          if (item) {
+            out.push({
+              componentName: occ.componentName,
+              occasionNo: occ.occasionNo,
+              categoryId: cat.id,
+              categoryName: cat.nama,
+              itemId: item.id,
+              itemName: item.nama,
+            })
+          }
+        }
+      }
+    }
+    return out
   }
 
   return (
@@ -259,6 +283,15 @@ export function MenuDrawer({ catalog, trigger }: MenuDrawerProps) {
             <Button
               disabled={!canSave}
               onClick={() => {
+                if (!pkg) return
+                onAddItem({
+                  key: crypto.randomUUID(),
+                  packageId: pkg.id,
+                  packageName: pkg.namaPaket,
+                  pricePerPax: priceNum,
+                  pax: paxNum,
+                  selections: buildSelections(),
+                })
                 setOpen(false)
                 reset()
               }}
