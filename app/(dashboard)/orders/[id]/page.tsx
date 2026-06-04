@@ -9,6 +9,7 @@ import { StatusTimeline } from '@/features/orders/components/status-timeline'
 import { StatusChangeActions } from '@/features/orders/components/status-change-actions'
 import { ORDER_STATUS_COLORS, ORDER_STATUS_TRANSITIONS } from '@/lib/constants/status'
 import { SEGMEN_COLORS } from '@/lib/constants/segmen'
+import { ORDER_TYPES, serviceChargePctForType, type OrderTypeKey } from '@/lib/constants/order-type'
 import { formatDate } from '@/lib/utils/format'
 import {
   Pencil,
@@ -173,6 +174,32 @@ export default async function OrderDetailPage({
                     {order.pax} pax
                   </dd>
                 </div>
+                <div>
+                  <dt className="text-slate-500">Tipe Order</dt>
+                  <dd className="font-medium mt-0.5">
+                    {order.order_type ? (
+                      ORDER_TYPES[order.order_type as OrderTypeKey]?.label ?? order.order_type
+                    ) : (
+                      <Badge variant="outline" className="bg-amber-100 text-amber-800">
+                        Belum diisi
+                      </Badge>
+                    )}
+                  </dd>
+                </div>
+                {order.order_category && (
+                  <div>
+                    <dt className="text-slate-500">Kategori</dt>
+                    <dd className="font-medium mt-0.5">{order.order_category}</dd>
+                  </div>
+                )}
+                {order.order_type && (
+                  <div>
+                    <dt className="text-slate-500">Service Charge</dt>
+                    <dd className="font-medium mt-0.5">
+                      {serviceChargePctForType(order.order_type)}%
+                    </dd>
+                  </div>
+                )}
                 {order.event_type && (
                   <div>
                     <dt className="text-slate-500">Jenis Event</dt>
