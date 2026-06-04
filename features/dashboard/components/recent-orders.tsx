@@ -55,7 +55,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                   Sales
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Ditambahkan
+                  Dibuat
                 </th>
               </tr>
             </thead>
