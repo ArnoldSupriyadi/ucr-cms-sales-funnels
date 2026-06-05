@@ -25,7 +25,7 @@ export default async function LoaPage({
       .from('orders')
       .select(`
         id, order_no, event_name, event_date, event_time, venue, pax, sales_id, order_type,
-        leads(company_name, segmen, line_business, address, lead_contacts(name, phone, is_primary))
+        leads(company_name, segmen, address, lead_contacts(name, phone, is_primary))
       `)
       .eq('id', id)
       .single(),
@@ -53,14 +53,14 @@ export default async function LoaPage({
   type LeadEmbed = {
     company_name: string | null
     segmen: string | null
-    line_business: string | null
     address: string | null
     lead_contacts: LeadContact[]
   }
   const lead = order.leads as unknown as LeadEmbed | null
   const primary =
     (lead?.lead_contacts ?? []).find((c) => c.is_primary) ?? lead?.lead_contacts?.[0]
-  const segmen = [lead?.segmen, lead?.line_business].filter(Boolean).join(' / ')
+  // Segmen mengikuti order form: hanya leads.segmen (tanpa line_business)
+  const segmen = lead?.segmen ?? ''
 
   const initial: InitialLoaData = {
     orderNo: order.order_no,
