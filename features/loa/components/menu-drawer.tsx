@@ -38,6 +38,8 @@ interface Occasion {
 
 export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
   const [open, setOpen] = useState(false)
+  // Node body Sheet → jadi target portal popover (PackageCombobox) agar wheel-scroll tak diblokir RemoveScroll Sheet
+  const [sheetBody, setSheetBody] = useState<HTMLDivElement | null>(null)
   const [packageId, setPackageId] = useState('')
   const [pax, setPax] = useState('')
   const [pricePerPax, setPricePerPax] = useState('')
@@ -179,7 +181,7 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
           <SheetTitle className="text-white">🍽️ Tambah Item LoA</SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+        <div ref={setSheetBody} className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {/* Paket */}
           <div className="space-y-1.5">
             <Label>Paket</Label>
@@ -187,6 +189,7 @@ export function MenuDrawer({ catalog, onAddItem, trigger }: MenuDrawerProps) {
               packagesByKategori={packagesByKategori}
               value={packageId}
               onChange={handlePackageChange}
+              container={sheetBody}
             />
           </div>
 

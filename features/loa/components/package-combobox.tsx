@@ -20,13 +20,16 @@ interface PackageComboboxProps {
   packagesByKategori: [string, CatalogPackage[]][]
   value: string
   onChange: (id: string) => void
+  /** Node portal popover. Diisi node di dalam Sheet agar wheel-scroll list tak diblokir RemoveScroll. */
+  container?: HTMLElement | null
 }
 
 /**
- * Picker paket ber-search (Popover + Command, mode popper via portal) →
- * tidak terpotong di dalam Sheet. Menggantikan Select shadcn.
+ * Picker paket ber-search (Popover + Command). Popover di-portal ke dalam Sheet
+ * (via `container`) supaya wheel-scroll list jalan & tetap tak terpotong.
+ * Menggantikan Select shadcn.
  */
-export function PackageCombobox({ packagesByKategori, value, onChange }: PackageComboboxProps) {
+export function PackageCombobox({ packagesByKategori, value, onChange, container }: PackageComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const selected = packagesByKategori
     .flatMap(([, pkgs]) => pkgs)
@@ -46,7 +49,7 @@ export function PackageCombobox({ packagesByKategori, value, onChange }: Package
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" container={container}>
         <Command>
           <CommandInput placeholder="Cari paket..." />
           <CommandList>
