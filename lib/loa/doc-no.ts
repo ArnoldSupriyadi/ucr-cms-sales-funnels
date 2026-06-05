@@ -1,11 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import { formatDocNo, nextSeqFromLast } from '@/lib/utils/doc-number'
 
-/** Generate nomor dokumen LoA format LOA-YYYY-MM-DD-XXX (urut per hari, dari tanggal generate). */
+/**
+ * Generate nomor dokumen LoA: LOA-YYYY-NNNN (running per tahun generate, kontinu, reset tiap tahun).
+ */
 export async function generateLoaDocNo(refDate: Date = new Date()): Promise<string> {
   const year = refDate.getFullYear()
-  const month = String(refDate.getMonth() + 1).padStart(2, '0')
-  const day = String(refDate.getDate()).padStart(2, '0')
-  const prefix = `LOA-${year}-${month}-${day}-`
+  const prefix = `LOA-${year}-`
 
   const supabase = await createClient()
   const { data } = await supabase
@@ -15,11 +16,6 @@ export async function generateLoaDocNo(refDate: Date = new Date()): Promise<stri
     .order('doc_no', { ascending: false })
     .limit(1)
 
-  let seq = 1
-  if (data && data.length > 0) {
-    const parts = data[0].doc_no.split('-')
-    const lastSeq = parseInt(parts[parts.length - 1], 10)
-    if (!isNaN(lastSeq)) seq = lastSeq + 1
-  }
-  return `${prefix}${String(seq).padStart(3, '0')}`
+  const seq = nextSeqFromLast(data?.[0]?.doc_no)
+  return formatDocNo('LOA', year, seq)
 }

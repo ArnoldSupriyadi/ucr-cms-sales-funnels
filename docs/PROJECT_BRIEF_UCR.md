@@ -13,7 +13,7 @@
 
 > ## ⚠️ Catatan Terminologi — "Order"
 >
-> Entitas event/pemesanan disebut **"Order"** di UI, bahasa bisnis, DAN di database: tabel `orders`, kolom `order_no` (format `UCR-YYYY-MM-DD-XXX`), tabel `order_status_logs`, FK `order_id`. Satu-satunya sisa penamaan lama adalah kolom `loa.booking_id` (FK ke `orders(id)`) — biarkan apa adanya.
+> Entitas event/pemesanan disebut **"Order"** di UI, bahasa bisnis, DAN di database: tabel `orders`, kolom `order_no` (format `UCR-YYYY-NNNN`, running per tahun pembuatan), tabel `order_status_logs`, FK `order_id`. Satu-satunya sisa penamaan lama adalah kolom `loa.booking_id` (FK ke `orders(id)`) — biarkan apa adanya.
 >
 > Alur produk: **Lead → Order → LoA → (IB + BEO)**. Satu Order menghasilkan satu LoA (1:1).
 

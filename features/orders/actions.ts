@@ -18,7 +18,7 @@ export async function createOrder(
   if (!user.permissions['orders.create']) return { success: false, error: 'Tidak ada izin' }
 
   const supabase = await createClient()
-  const order_no = await generateOrderNo(data.event_date)
+  const order_no = await generateOrderNo()
 
   const { data: booking, error } = await supabase
     .from('orders')

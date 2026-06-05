@@ -128,7 +128,8 @@ ucr-cms-sales-funnels/
 │   ├── loa/                            # calculations, selection-rules, menu-detail, doc-no, catalog
 │   ├── utils/
 │   │   ├── format.ts                   # formatRupiah, formatDate
-│   │   ├── order-no.ts                 # Generate UCR-YYYY-MM-DD-XXX (nomor Order)
+│   │   ├── order-no.ts                 # Generate UCR-YYYY-NNNN (running per tahun)
+│   │   ├── doc-number.ts               # Helper murni penomoran (formatDocNo, nextSeqFromLast)
 │   │   └── cn.ts                       # clsx + tailwind-merge
 │   ├── documents/                      # loa-pdf, loa-docx (target)
 │   └── notifications/                  # whatsapp/telegram (target)
@@ -166,7 +167,7 @@ ucr-cms-sales-funnels/
 - [x] CRUD Leads + Lead Contacts
 - [x] CRUD Orders + status change flow
 - [x] Order status timeline component
-- [x] Generate order_no otomatis (UCR-YYYY-MM-DD-XXX) — util `lib/utils/order-no.ts`
+- [x] Generate order_no otomatis (UCR-YYYY-NNNN, running per tahun pembuatan) — util `lib/utils/order-no.ts`
 - [ ] RLS test: sales hanya lihat lead sendiri
 
 ### Bulan 3 — Dokumen: LoA 🔄 (sedang dikerjakan)

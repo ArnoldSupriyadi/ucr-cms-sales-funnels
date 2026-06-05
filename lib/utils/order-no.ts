@@ -1,12 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
+import { formatDocNo, nextSeqFromLast } from '@/lib/utils/doc-number'
 
-export async function generateOrderNo(eventDate: string): Promise<string> {
-  const date = new Date(eventDate)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  // Format: UCR-YYYY-MM-DD-XXX (seq reset per-hari berdasarkan event_date)
-  const prefix = `UCR-${year}-${month}-${day}-`
+/**
+ * Generate nomor order: UCR-YYYY-NNNN (running per tahun pembuatan, kontinu, reset tiap tahun).
+ * Tidak lagi berbasis event_date — supaya nomor berurutan & tahun tidak ikut tanggal acara.
+ */
+export async function generateOrderNo(refDate: Date = new Date()): Promise<string> {
+  const year = refDate.getFullYear()
+  const prefix = `UCR-${year}-`
 
   const supabase = await createClient()
   const { data } = await supabase
@@ -16,13 +17,6 @@ export async function generateOrderNo(eventDate: string): Promise<string> {
     .order('order_no', { ascending: false })
     .limit(1)
 
-  let seq = 1
-  if (data && data.length > 0) {
-    const last = data[0].order_no
-    const parts = last.split('-')
-    const lastSeq = parseInt(parts[parts.length - 1], 10)
-    if (!isNaN(lastSeq)) seq = lastSeq + 1
-  }
-
-  return `${prefix}${String(seq).padStart(3, '0')}`
+  const seq = nextSeqFromLast(data?.[0]?.order_no)
+  return formatDocNo('UCR', year, seq)
 }
