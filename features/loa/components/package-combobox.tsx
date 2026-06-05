@@ -45,15 +45,15 @@ export function PackageCombobox({ packagesByKategori, value, onChange, container
           aria-expanded={open}
           className={cn('w-full justify-between font-normal', !selected && 'text-slate-400')}
         >
-          <span className="truncate">{selected ? selected.namaPaket : 'Pilih paket...'}</span>
+          <span className="truncate">{selected ? selected.namaPaket : 'Pilih menu...'}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" container={container}>
         <Command>
-          <CommandInput placeholder="Cari paket..." />
+          <CommandInput placeholder="Cari menu..." />
           <CommandList>
-            <CommandEmpty>Paket tidak ditemukan.</CommandEmpty>
+            <CommandEmpty>Menu tidak ditemukan.</CommandEmpty>
             {packagesByKategori.map(([kategori, pkgs]) => (
               <CommandGroup key={kategori} heading={kategori}>
                 {pkgs.map((p) => (
