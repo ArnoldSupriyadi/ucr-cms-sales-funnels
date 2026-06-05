@@ -15,7 +15,7 @@ export default async function NewOrderPage({
   const supabase = await createClient()
   const { data: leads } = await supabase
     .from('leads')
-    .select('id, company_name')
+    .select('id, company_name, segmen')
     .order('company_name')
 
   return (

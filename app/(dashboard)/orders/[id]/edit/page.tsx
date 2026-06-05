@@ -15,7 +15,7 @@ export default async function EditOrderPage({
   const supabase = await createClient()
   const [{ data: order }, { data: leads }] = await Promise.all([
     supabase.from('orders').select('*').eq('id', id).single(),
-    supabase.from('leads').select('id, company_name').order('company_name'),
+    supabase.from('leads').select('id, company_name, segmen').order('company_name'),
   ])
 
   if (!order) notFound()

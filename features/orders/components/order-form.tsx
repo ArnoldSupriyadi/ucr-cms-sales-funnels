@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import { SEGMEN_OPTIONS } from '@/lib/constants/segmen'
+import { SEGMEN_COLORS } from '@/lib/constants/segmen'
 import {
   ORDER_TYPE_KEYS,
   ORDER_TYPES,
@@ -24,7 +24,7 @@ import type { Order, Lead, SegmenEnum } from '@/types/domain'
 
 interface OrderFormProps {
   order?: Order
-  leads: Pick<Lead, 'id' | 'company_name'>[]
+  leads: Pick<Lead, 'id' | 'company_name' | 'segmen'>[]
   defaultLeadId?: string
 }
 
@@ -53,7 +53,6 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
   const [orderCategory, setOrderCategory] = useState(order?.order_category ?? '')
   const [venue, setVenue] = useState(order?.venue ?? '')
   const [pax, setPax] = useState(String(order?.pax ?? ''))
-  const [segmen, setSegmen] = useState(order?.segmen ?? '')
   const [isException, setIsException] = useState(order?.is_exception ?? false)
   const [exceptionReason, setExceptionReason] = useState(order?.exception_reason ?? '')
 
@@ -61,6 +60,10 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
     value: l.id,
     label: l.company_name,
   }))
+
+  // Segmen mengikuti lead terpilih (read-only, otomatis dari tabel leads)
+  const selectedLead = leads.find((l) => l.id === leadId)
+  const segmen = selectedLead?.segmen ?? null
 
   const orderTypeOptions: ComboboxOption[] = ORDER_TYPE_KEYS.map((k) => ({
     value: k,
@@ -115,7 +118,7 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
       order_category: orderCategory || null,
       venue: venue || null,
       pax: parseInt(pax, 10),
-      segmen: (segmen || null) as SegmenEnum | null,
+      segmen: segmen as SegmenEnum | null,
       is_exception: isException,
       exception_reason: isException ? exceptionReason || null : null,
     }
@@ -186,16 +189,24 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
               {errors.leadId && <p className="text-xs text-red-500">{errors.leadId}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="segmen">Segmen</Label>
-              <Combobox
-                id="segmen"
-                options={SEGMEN_OPTIONS as ComboboxOption[]}
-                value={segmen}
-                onChange={setSegmen}
-                placeholder="Pilih segmen..."
-                searchPlaceholder="Cari segmen..."
-                emptyText="Segmen tidak ditemukan."
-              />
+              <Label>Segmen</Label>
+              <div className="flex h-9 items-center rounded-md border border-slate-200 bg-slate-50 px-3">
+                {segmen ? (
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-xs font-medium',
+                      SEGMEN_COLORS[segmen]
+                    )}
+                  >
+                    {segmen}
+                  </span>
+                ) : (
+                  <span className="text-sm text-slate-400">
+                    {leadId ? 'Klien belum punya segmen' : 'Otomatis dari klien'}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400">Mengikuti segmen klien · otomatis</p>
             </div>
           </div>
         </section>
