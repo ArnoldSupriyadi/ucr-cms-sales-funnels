@@ -988,6 +988,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      next_doc_seq: {
+        Args: { p_prefix: string }
+        Returns: number
+      }
     }
     Enums: {
       segmen_enum: 'Wedding' | 'Private' | 'Corporate' | 'BUMN' | 'Government'

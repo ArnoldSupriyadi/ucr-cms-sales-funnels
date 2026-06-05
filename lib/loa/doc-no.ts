@@ -1,21 +1,16 @@
-import { createClient } from '@/lib/supabase/server'
-import { formatDocNo, nextSeqFromLast } from '@/lib/utils/doc-number'
+import { createAdminClient } from '@/lib/supabase/server'
+import { formatDocNo } from '@/lib/utils/doc-number'
 
 /**
- * Generate nomor dokumen LoA: LOA-YYYY-NNNN (running per tahun generate, kontinu, reset tiap tahun).
+ * Generate nomor dokumen LoA: LOA-YYYY-NNNN (running per tahun, kontinu, reset tiap tahun).
+ * Nomor diambil dari counter atomik DB (fungsi next_doc_seq) → aman dari race condition & RLS.
  */
 export async function generateLoaDocNo(refDate: Date = new Date()): Promise<string> {
   const year = refDate.getFullYear()
-  const prefix = `LOA-${year}-`
-
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('loa')
-    .select('doc_no')
-    .like('doc_no', `${prefix}%`)
-    .order('doc_no', { ascending: false })
-    .limit(1)
-
-  const seq = nextSeqFromLast(data?.[0]?.doc_no)
-  return formatDocNo('LOA', year, seq)
+  const supabase = createAdminClient()
+  const { data, error } = await supabase.rpc('next_doc_seq', { p_prefix: `LOA-${year}` })
+  if (error || data == null) {
+    throw new Error(`Gagal generate doc_no LoA: ${error?.message ?? 'no sequence returned'}`)
+  }
+  return formatDocNo('LOA', year, data)
 }

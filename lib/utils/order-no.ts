@@ -1,22 +1,17 @@
-import { createClient } from '@/lib/supabase/server'
-import { formatDocNo, nextSeqFromLast } from '@/lib/utils/doc-number'
+import { createAdminClient } from '@/lib/supabase/server'
+import { formatDocNo } from '@/lib/utils/doc-number'
 
 /**
  * Generate nomor order: UCR-YYYY-NNNN (running per tahun pembuatan, kontinu, reset tiap tahun).
- * Tidak lagi berbasis event_date — supaya nomor berurutan & tahun tidak ikut tanggal acara.
+ * Nomor diambil dari counter atomik DB (fungsi next_doc_seq) → aman dari race condition
+ * & RLS (tak lagi baca MAX(order_no)). Dipanggil via admin client (service_role).
  */
 export async function generateOrderNo(refDate: Date = new Date()): Promise<string> {
   const year = refDate.getFullYear()
-  const prefix = `UCR-${year}-`
-
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('orders')
-    .select('order_no')
-    .like('order_no', `${prefix}%`)
-    .order('order_no', { ascending: false })
-    .limit(1)
-
-  const seq = nextSeqFromLast(data?.[0]?.order_no)
-  return formatDocNo('UCR', year, seq)
+  const supabase = createAdminClient()
+  const { data, error } = await supabase.rpc('next_doc_seq', { p_prefix: `UCR-${year}` })
+  if (error || data == null) {
+    throw new Error(`Gagal generate order_no: ${error?.message ?? 'no sequence returned'}`)
+  }
+  return formatDocNo('UCR', year, data)
 }
