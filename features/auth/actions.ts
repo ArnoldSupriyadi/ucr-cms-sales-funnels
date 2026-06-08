@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { parseBrowser, parseOS } from '@/lib/utils/user-agent'
 
 const SESSION_COOKIE = 'ucr-sk'
-const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 hari
+const SESSION_COOKIE_MAX_AGE = 60 * 60 * 8 // 8 jam (sesi berakhir 8 jam setelah login → wajib login ulang)
 
 export async function createSession(tokens?: {
   access_token: string
