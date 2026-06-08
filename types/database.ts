@@ -255,6 +255,7 @@ export type Database = {
           sales_id: string | null
           status: Database['public']['Enums']['order_status_enum']
           event_date: string
+          event_date_end: string | null
           event_time: string | null
           event_name: string | null
           event_type: string | null
@@ -276,6 +277,7 @@ export type Database = {
           sales_id?: string | null
           status?: Database['public']['Enums']['order_status_enum']
           event_date: string
+          event_date_end?: string | null
           event_time?: string | null
           event_name?: string | null
           event_type?: string | null
@@ -297,6 +299,7 @@ export type Database = {
           sales_id?: string | null
           status?: Database['public']['Enums']['order_status_enum']
           event_date?: string
+          event_date_end?: string | null
           event_time?: string | null
           event_name?: string | null
           event_type?: string | null
@@ -471,10 +474,9 @@ export type Database = {
         Row: {
           id: string
           loa_id: string
-          order_date: string | null
-          package_name: string
-          menu_detail: string | null
-          price_per_pax: number
+          event_id: string | null
+          name: string
+          keterangan: string | null
           pax: number
           amount: number
           sort_order: number
@@ -482,10 +484,9 @@ export type Database = {
         Insert: {
           id?: string
           loa_id: string
-          order_date?: string | null
-          package_name: string
-          menu_detail?: string | null
-          price_per_pax: number
+          event_id?: string | null
+          name: string
+          keterangan?: string | null
           pax: number
           amount: number
           sort_order?: number
@@ -493,10 +494,9 @@ export type Database = {
         Update: {
           id?: string
           loa_id?: string
-          order_date?: string | null
-          package_name?: string
-          menu_detail?: string | null
-          price_per_pax?: number
+          event_id?: string | null
+          name?: string
+          keterangan?: string | null
           pax?: number
           amount?: number
           sort_order?: number
@@ -507,6 +507,13 @@ export type Database = {
             columns: ["loa_id"]
             isOneToOne: false
             referencedRelation: "loa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loa_items_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "loa_events"
             referencedColumns: ["id"]
           }
         ]
@@ -912,40 +919,120 @@ export type Database = {
           }
         ]
       }
-      loa_item_selections: {
+      loa_events: {
         Row: {
           id: string
-          loa_item_id: string
-          component_name: string
-          occasion_no: number
-          category_name: string
-          item_name: string
+          loa_id: string
+          event_date: string | null
+          serving_time: string | null
+          venue: string | null
+          setup_location: string | null
+          pax: number | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          loa_id: string
+          event_date?: string | null
+          serving_time?: string | null
+          venue?: string | null
+          setup_location?: string | null
+          pax?: number | null
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          loa_id?: string
+          event_date?: string | null
+          serving_time?: string | null
+          venue?: string | null
+          setup_location?: string | null
+          pax?: number | null
+          sort_order?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loa_events_loa_id_fkey"
+            columns: ["loa_id"]
+            isOneToOne: false
+            referencedRelation: "loa"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      loa_subgroups: {
+        Row: {
+          id: string
+          header_id: string
+          name: string
+          keterangan: string | null
           sort_order: number
         }
         Insert: {
           id?: string
-          loa_item_id: string
-          component_name: string
-          occasion_no?: number
-          category_name: string
-          item_name: string
+          header_id: string
+          name: string
+          keterangan?: string | null
           sort_order?: number
         }
         Update: {
           id?: string
-          loa_item_id?: string
-          component_name?: string
-          occasion_no?: number
-          category_name?: string
-          item_name?: string
+          header_id?: string
+          name?: string
+          keterangan?: string | null
           sort_order?: number
         }
         Relationships: [
           {
-            foreignKeyName: "loa_item_selections_loa_item_id_fkey"
-            columns: ["loa_item_id"]
+            foreignKeyName: "loa_subgroups_header_id_fkey"
+            columns: ["header_id"]
             isOneToOne: false
             referencedRelation: "loa_items"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      loa_menu_items: {
+        Row: {
+          id: string
+          header_id: string
+          subgroup_id: string | null
+          name: string
+          keterangan: string | null
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          header_id: string
+          subgroup_id?: string | null
+          name: string
+          keterangan?: string | null
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          header_id?: string
+          subgroup_id?: string | null
+          name?: string
+          keterangan?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loa_menu_items_header_id_fkey"
+            columns: ["header_id"]
+            isOneToOne: false
+            referencedRelation: "loa_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loa_menu_items_subgroup_id_fkey"
+            columns: ["subgroup_id"]
+            isOneToOne: false
+            referencedRelation: "loa_subgroups"
             referencedColumns: ["id"]
           }
         ]

@@ -1,48 +1,52 @@
 import { describe, it, expect } from 'vitest'
-import { loaFormReducer } from './loa-form-reducer'
-import { DEFAULT_PRICING, type LoaWizardState, type LoaItemDraft } from './types'
+import { loaFormReducer, initialState } from './loa-form-reducer'
 
-const baseState: LoaWizardState = {
-  detail: {
-    eventName: 'MAP Forward', eventAddress: 'Generali Tower',
-    eventDate: '2026-04-29', eventTime: '08:00 - 17:00',
-    pax: 30, setupLocation: '', salesId: 'sales-1',
-  },
-  items: [],
-  pricing: { ...DEFAULT_PRICING },
-}
-
-const item: LoaItemDraft = {
-  key: 'k1', packageId: 'p1', packageName: 'Gala Dinner',
-  pricePerPax: 150000, pax: 500, selections: [],
-}
-
-describe('loaFormReducer', () => {
-  it('SET_DETAIL_FIELD mengubah satu field detail', () => {
-    const s = loaFormReducer(baseState, { type: 'SET_DETAIL_FIELD', field: 'eventName', value: 'Halal Bihalal' })
-    expect(s.detail.eventName).toBe('Halal Bihalal')
-    expect(s.detail.pax).toBe(30) // field lain tak berubah
+describe('loaFormReducer pohon', () => {
+  it('ADD_EVENT menambah event kosong', () => {
+    const s = loaFormReducer(initialState([]), { type: 'ADD_EVENT' })
+    expect(s.events).toHaveLength(1)
+    expect(s.events[0].headers).toEqual([])
   })
 
-  it('ADD_ITEM menambah item', () => {
-    const s = loaFormReducer(baseState, { type: 'ADD_ITEM', item })
-    expect(s.items).toHaveLength(1)
-    expect(s.items[0].key).toBe('k1')
+  it('ADD_HEADER menambah header ke event', () => {
+    let s = loaFormReducer(initialState([]), { type: 'ADD_EVENT' })
+    const ek = s.events[0].key
+    s = loaFormReducer(s, { type: 'ADD_HEADER', eventKey: ek })
+    expect(s.events[0].headers).toHaveLength(1)
   })
 
-  it('REMOVE_ITEM menghapus item berdasarkan key', () => {
-    const withItem = loaFormReducer(baseState, { type: 'ADD_ITEM', item })
-    const s = loaFormReducer(withItem, { type: 'REMOVE_ITEM', key: 'k1' })
-    expect(s.items).toHaveLength(0)
+  it('SET_HEADER_FIELD mengubah amount', () => {
+    let s = loaFormReducer(initialState([]), { type: 'ADD_EVENT' })
+    const ek = s.events[0].key
+    s = loaFormReducer(s, { type: 'ADD_HEADER', eventKey: ek })
+    const hk = s.events[0].headers[0].key
+    s = loaFormReducer(s, { type: 'SET_HEADER_FIELD', eventKey: ek, headerKey: hk, field: 'amount', value: 5000 })
+    expect(s.events[0].headers[0].amount).toBe(5000)
   })
 
-  it('SET_PRICING_FIELD mengubah persentase', () => {
-    const s = loaFormReducer(baseState, { type: 'SET_PRICING_FIELD', field: 'scPct', value: 7 })
-    expect(s.pricing.scPct).toBe(7)
+  it('ADD_ITEM langsung di header (subGroupKey null)', () => {
+    let s = loaFormReducer(initialState([]), { type: 'ADD_EVENT' })
+    const ek = s.events[0].key
+    s = loaFormReducer(s, { type: 'ADD_HEADER', eventKey: ek })
+    const hk = s.events[0].headers[0].key
+    s = loaFormReducer(s, { type: 'ADD_ITEM', eventKey: ek, headerKey: hk, subGroupKey: null })
+    expect(s.events[0].headers[0].items).toHaveLength(1)
+  })
+
+  it('ADD_ITEM ke sub-grup', () => {
+    let s = loaFormReducer(initialState([]), { type: 'ADD_EVENT' })
+    const ek = s.events[0].key
+    s = loaFormReducer(s, { type: 'ADD_HEADER', eventKey: ek })
+    const hk = s.events[0].headers[0].key
+    s = loaFormReducer(s, { type: 'ADD_SUBGROUP', eventKey: ek, headerKey: hk })
+    const sgk = s.events[0].headers[0].subGroups[0].key
+    s = loaFormReducer(s, { type: 'ADD_ITEM', eventKey: ek, headerKey: hk, subGroupKey: sgk })
+    expect(s.events[0].headers[0].subGroups[0].items).toHaveLength(1)
+    expect(s.events[0].headers[0].items).toHaveLength(0)
   })
 
   it('TOGGLE_DISCOUNT off → discountValue 0 & disabled', () => {
-    const on = loaFormReducer(baseState, { type: 'TOGGLE_DISCOUNT', on: true })
+    const on = loaFormReducer(initialState([]), { type: 'TOGGLE_DISCOUNT', on: true })
     const withVal = loaFormReducer(on, { type: 'SET_PRICING_FIELD', field: 'discountValue', value: 5 })
     expect(withVal.pricing.discountEnabled).toBe(true)
     const off = loaFormReducer(withVal, { type: 'TOGGLE_DISCOUNT', on: false })

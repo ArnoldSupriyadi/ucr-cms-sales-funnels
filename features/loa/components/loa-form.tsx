@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { LoaFormProvider, useLoaForm } from '../loa-form-context'
 import type {
   InitialLoaData,
-  LoaItemDraft,
+  EventDraft,
   LoaPricingDraft,
   MenuCatalog,
   SalesUser,
@@ -23,7 +23,7 @@ interface LoaFormProps {
   initial: InitialLoaData
   salesUsers: SalesUser[]
   catalog: MenuCatalog
-  initialItems?: LoaItemDraft[]
+  initialEvents?: EventDraft[]
   initialPricing?: LoaPricingDraft
 }
 
@@ -32,7 +32,7 @@ export function LoaForm({
   initial,
   salesUsers,
   catalog,
-  initialItems,
+  initialEvents,
   initialPricing,
 }: LoaFormProps) {
   return (
@@ -40,7 +40,7 @@ export function LoaForm({
       orderId={orderId}
       initial={initial}
       salesUsers={salesUsers}
-      initialItems={initialItems}
+      initialEvents={initialEvents}
       initialPricing={initialPricing}
     >
       <LoaFormBody catalog={catalog} />
@@ -99,7 +99,7 @@ function LoaFormBody({ catalog }: { catalog: MenuCatalog }) {
               {step < 3 && (
                 <Button
                   onClick={() => go(1)}
-                  disabled={step === 1 && state.items.length === 0}
+                  disabled={step === 1 && state.events.every((e) => e.headers.length === 0)}
                 >
                   Lanjut →
                 </Button>

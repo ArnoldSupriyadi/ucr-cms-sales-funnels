@@ -12,6 +12,10 @@ export const formatDate = (dateStr: string) =>
     year: 'numeric',
   }).format(new Date(dateStr))
 
+/** Rentang tanggal: "01 Jul 2026 – 03 Jul 2026"; bila end kosong/sama → satu tanggal. */
+export const formatDateRange = (start: string, end?: string | null) =>
+  !end || end === start ? formatDate(start) : `${formatDate(start)} – ${formatDate(end)}`
+
 export const formatDateLong = (dateStr: string) =>
   new Intl.DateTimeFormat('id-ID', {
     weekday: 'long',

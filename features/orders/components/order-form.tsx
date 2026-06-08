@@ -30,7 +30,8 @@ interface OrderFormProps {
 
 const FIELD_LABELS: Record<string, string> = {
   leadId: 'Klien',
-  eventDate: 'Tanggal Event',
+  eventDate: 'Tanggal Mulai',
+  eventDateEnd: 'Tanggal Selesai',
   pax: 'Jumlah Pax',
   orderType: 'Tipe Order',
   orderCategory: 'Kategori',
@@ -48,6 +49,7 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
   const [leadId, setLeadId] = useState(order?.lead_id ?? defaultLeadId ?? '')
   const [eventName, setEventName] = useState(order?.event_name ?? '')
   const [eventDate, setEventDate] = useState(order?.event_date ?? '')
+  const [eventDateEnd, setEventDateEnd] = useState(order?.event_date_end ?? '')
   const [eventTime, setEventTime] = useState(order?.event_time ?? '')
   const [orderType, setOrderType] = useState(order?.order_type ?? '')
   const [orderCategory, setOrderCategory] = useState(order?.order_category ?? '')
@@ -86,7 +88,9 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
   function validate(): Record<string, string> {
     const e: Record<string, string> = {}
     if (!leadId) e.leadId = 'Klien wajib dipilih'
-    if (!eventDate) e.eventDate = 'Tanggal event wajib diisi'
+    if (!eventDate) e.eventDate = 'Tanggal mulai wajib diisi'
+    if (eventDateEnd && eventDateEnd < eventDate)
+      e.eventDateEnd = 'Tanggal selesai tidak boleh sebelum tanggal mulai'
     const paxNum = parseInt(pax, 10)
     if (!pax || Number.isNaN(paxNum) || paxNum < 1)
       e.pax = 'Jumlah pax wajib diisi (minimal 1)'
@@ -113,6 +117,7 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
       lead_id: leadId,
       event_name: eventName || null,
       event_date: eventDate,
+      event_date_end: eventDateEnd || null,
       event_time: eventTime || null,
       order_type: orderType || null,
       order_category: orderCategory || null,
@@ -230,10 +235,10 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <Label htmlFor="event_date">
-                Tanggal Event <span className="text-red-500">*</span>
+                Tanggal Mulai <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="event_date"
@@ -246,6 +251,20 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
                 className={cn(errors.eventDate && errorInput)}
               />
               {errors.eventDate && <p className="text-xs text-red-500">{errors.eventDate}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="event_date_end">Tanggal Selesai</Label>
+              <Input
+                id="event_date_end"
+                type="date"
+                value={eventDateEnd}
+                onChange={(e) => {
+                  setEventDateEnd(e.target.value)
+                  clearError('eventDateEnd')
+                }}
+                className={cn(errors.eventDateEnd && errorInput)}
+              />
+              {errors.eventDateEnd && <p className="text-xs text-red-500">{errors.eventDateEnd}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="event_time">Waktu Kegiatan</Label>

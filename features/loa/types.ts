@@ -32,22 +32,35 @@ export interface MenuCatalog {
   categoriesByComponentType: Record<string, CatalogCategory[]>
 }
 
-// ---- State draft di client ----
-export interface DraftSelection {
-  componentName: string
-  occasionNo: number
-  categoryId: string
-  categoryName: string
-  itemId: string
-  itemName: string
+// ---- State draft di client (pohon Event → Header → [SubGroup] → Item) ----
+export interface MenuItemDraft {
+  key: string
+  name: string
+  keterangan: string
 }
-export interface LoaItemDraft {
-  key: string            // id sementara di client (crypto.randomUUID)
-  packageId: string | null
-  packageName: string
-  pricePerPax: number
+export interface SubGroupDraft {
+  key: string
+  name: string
+  keterangan: string
+  items: MenuItemDraft[]
+}
+export interface HeaderDraft {
+  key: string
+  name: string
+  keterangan: string
   pax: number
-  selections: DraftSelection[]
+  amount: number              // manual; price/pax = amount/pax (turunan tampilan)
+  subGroups: SubGroupDraft[]  // boleh kosong
+  items: MenuItemDraft[]      // item langsung di header (di luar sub-grup)
+}
+export interface EventDraft {
+  key: string
+  eventDate: string           // 'YYYY-MM-DD'
+  servingTime: string
+  venue: string
+  setupLocation: string
+  pax: number                 // manual, utk tabel Waktu & Tempat
+  headers: HeaderDraft[]
 }
 export interface LoaDetailDraft {
   eventName: string
@@ -68,14 +81,13 @@ export interface LoaPricingDraft {
 }
 export interface LoaWizardState {
   detail: LoaDetailDraft
-  items: LoaItemDraft[]
+  events: EventDraft[]
   pricing: LoaPricingDraft
 }
 
-/** Subset draft LoA yang dipersist & dimuat ulang dari DB (detail lain bersumber dari order). */
+/** Subset draft LoA yang dipersist & dimuat ulang dari DB. */
 export interface SavedLoaDraft {
-  setupLocation: string
-  items: LoaItemDraft[]
+  events: EventDraft[]
   pricing: LoaPricingDraft
 }
 

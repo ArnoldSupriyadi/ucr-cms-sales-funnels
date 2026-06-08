@@ -1,10 +1,5 @@
 export const PB1_PCT = 10
 
-export interface LoaCalcItem {
-  pricePerPax: number
-  pax: number
-}
-
 export interface LoaPricingInput {
   scPct: number
   handlingType: 'percent' | 'flat'
@@ -29,11 +24,12 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100
 }
 
+/** `amounts` = total tiap Header (manual). subTotal1 = Σ amounts. */
 export function calculateLoa(
-  items: LoaCalcItem[],
+  amounts: number[],
   pricing: LoaPricingInput
 ): LoaCalcResult {
-  const subTotal1 = round2(items.reduce((sum, i) => sum + i.pricePerPax * i.pax, 0))
+  const subTotal1 = round2(amounts.reduce((sum, a) => sum + a, 0))
 
   const rawDiscount =
     pricing.discountType === 'percent'

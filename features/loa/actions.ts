@@ -5,15 +5,14 @@ import { createClient } from '@/lib/supabase/server'
 import { getAppUser } from '@/lib/auth/permissions'
 import { generateLoaDocNo } from '@/lib/loa/doc-no'
 import { calculateLoa } from '@/lib/loa/calculations'
-import { generateMenuDetail } from '@/lib/loa/menu-detail'
 import { serviceChargePctForType } from '@/lib/constants/order-type'
 import type { ActionResult } from '@/types/domain'
-import type { LoaWizardState, SavedLoaDraft } from './types'
+import type { LoaWizardState, SavedLoaDraft, EventDraft } from './types'
 
 /**
- * Simpan draft LoA secara atomik: re-validasi + re-kalkulasi di server (jangan
- * percaya angka client), upsert header `loa`, lalu delete-and-reinsert
- * `loa_items` + `loa_item_selections`. 1 order = 1 LoA (UNIQUE booking_id).
+ * Simpan draft LoA: re-kalkulasi server (basis Σ amount Header, SC dari tipe order),
+ * upsert header `loa`, lalu delete-and-reinsert pohon events → headers → subgroups → menu_items.
+ * 1 order = 1 LoA (UNIQUE booking_id).
  */
 export async function saveLoaDraft(
   orderId: string,
@@ -22,11 +21,12 @@ export async function saveLoaDraft(
   const user = await getAppUser()
   if (!user) return { success: false, error: 'Tidak terautentikasi' }
   if (!user.permissions['loa.create']) return { success: false, error: 'Tidak ada izin' }
-  if (state.items.length === 0) return { success: false, error: 'Minimal 1 item' }
+
+  const headers = state.events.flatMap((e) => e.headers)
+  if (headers.length === 0) return { success: false, error: 'Minimal 1 header menu' }
 
   const supabase = await createClient()
 
-  // Pastikan order ada & milik sales ini (lapis kedua di server)
   const { data: order } = await supabase
     .from('orders')
     .select('id, sales_id, order_type')
@@ -37,19 +37,13 @@ export async function saveLoaDraft(
     return { success: false, error: 'Bukan order Anda' }
   }
 
-  // Service Charge di-derive ulang dari tipe order (jangan percaya angka client).
   const scPct = serviceChargePctForType(order.order_type)
   if (scPct <= 0) {
     return { success: false, error: 'Tipe order belum diisi — pilih tipe order dulu sebelum simpan LoA' }
   }
 
-  // Re-kalkulasi di server dgn scPct dari tipe order + handling/diskon dari client
-  const calc = calculateLoa(
-    state.items.map((i) => ({ pricePerPax: i.pricePerPax, pax: i.pax })),
-    { ...state.pricing, scPct }
-  )
+  const calc = calculateLoa(headers.map((h) => h.amount), { ...state.pricing, scPct })
 
-  // Cek LoA existing (1:1 dengan order)
   const { data: existing } = await supabase
     .from('loa')
     .select('id, doc_no')
@@ -62,7 +56,7 @@ export async function saveLoaDraft(
     booking_id: orderId,
     doc_no: docNo,
     status: 'draft' as const,
-    setup_location: state.detail.setupLocation || null,
+    setup_location: null,
     service_charge_pct: scPct,
     handling_fee_type: state.pricing.handlingType,
     handling_fee_value: state.pricing.handlingValue,
@@ -80,58 +74,89 @@ export async function saveLoaDraft(
     created_by: user.id,
   }
 
-  // Upsert header
   let loaId: string
   if (existing) {
     const { error } = await supabase.from('loa').update(loaPayload).eq('id', existing.id)
     if (error) return { success: false, error: error.message }
     loaId = existing.id
-    // Hapus anak lama (CASCADE menghapus selections)
+    // Hapus pohon lama (CASCADE: header→subgroup/menu_items; event→header)
     await supabase.from('loa_items').delete().eq('loa_id', loaId)
+    await supabase.from('loa_events').delete().eq('loa_id', loaId)
   } else {
     const { data, error } = await supabase.from('loa').insert(loaPayload).select('id').single()
     if (error || !data) return { success: false, error: error?.message ?? 'Gagal simpan LoA' }
     loaId = data.id
   }
 
-  // Insert ulang items + selections
-  for (let idx = 0; idx < state.items.length; idx++) {
-    const item = state.items[idx]
-    const amount = Math.round(item.pricePerPax * item.pax * 100) / 100
-    const { data: insItem, error: itemErr } = await supabase
-      .from('loa_items')
+  // Insert ulang pohon
+  for (let ei = 0; ei < state.events.length; ei++) {
+    const ev = state.events[ei]
+    const { data: insEvent, error: evErr } = await supabase
+      .from('loa_events')
       .insert({
         loa_id: loaId,
-        package_name: item.packageName,
-        menu_detail: generateMenuDetail(
-          item.selections.map((s) => ({
-            componentName: s.componentName,
-            occasionNo: s.occasionNo,
-            categoryName: s.categoryName,
-            itemName: s.itemName,
-          }))
-        ),
-        price_per_pax: item.pricePerPax,
-        pax: item.pax,
-        amount,
-        sort_order: idx,
+        event_date: ev.eventDate || null,
+        serving_time: ev.servingTime || null,
+        venue: ev.venue || null,
+        setup_location: ev.setupLocation || null,
+        pax: ev.pax || null,
+        sort_order: ei,
       })
       .select('id')
       .single()
-    if (itemErr || !insItem) return { success: false, error: itemErr?.message ?? 'Gagal simpan item' }
+    if (evErr || !insEvent) return { success: false, error: evErr?.message ?? 'Gagal simpan event' }
 
-    if (item.selections.length > 0) {
-      const { error: selErr } = await supabase.from('loa_item_selections').insert(
-        item.selections.map((s, sIdx) => ({
-          loa_item_id: insItem.id,
-          component_name: s.componentName,
-          occasion_no: s.occasionNo,
-          category_name: s.categoryName,
-          item_name: s.itemName,
-          sort_order: sIdx,
-        }))
-      )
-      if (selErr) return { success: false, error: selErr.message }
+    for (let hi = 0; hi < ev.headers.length; hi++) {
+      const h = ev.headers[hi]
+      const { data: insHeader, error: hErr } = await supabase
+        .from('loa_items')
+        .insert({
+          loa_id: loaId,
+          event_id: insEvent.id,
+          name: h.name,
+          keterangan: h.keterangan || null,
+          pax: h.pax,
+          amount: h.amount,
+          sort_order: hi,
+        })
+        .select('id')
+        .single()
+      if (hErr || !insHeader) return { success: false, error: hErr?.message ?? 'Gagal simpan header' }
+
+      // item langsung (tanpa sub-grup)
+      for (let ii = 0; ii < h.items.length; ii++) {
+        const it = h.items[ii]
+        const { error } = await supabase.from('loa_menu_items').insert({
+          header_id: insHeader.id,
+          subgroup_id: null,
+          name: it.name,
+          keterangan: it.keterangan || null,
+          sort_order: ii,
+        })
+        if (error) return { success: false, error: error.message }
+      }
+
+      // sub-grup + itemnya
+      for (let si = 0; si < h.subGroups.length; si++) {
+        const sg = h.subGroups[si]
+        const { data: insSub, error: sErr } = await supabase
+          .from('loa_subgroups')
+          .insert({ header_id: insHeader.id, name: sg.name, keterangan: sg.keterangan || null, sort_order: si })
+          .select('id')
+          .single()
+        if (sErr || !insSub) return { success: false, error: sErr?.message ?? 'Gagal simpan sub-grup' }
+        for (let ii = 0; ii < sg.items.length; ii++) {
+          const it = sg.items[ii]
+          const { error } = await supabase.from('loa_menu_items').insert({
+            header_id: insHeader.id,
+            subgroup_id: insSub.id,
+            name: it.name,
+            keterangan: it.keterangan || null,
+            sort_order: ii,
+          })
+          if (error) return { success: false, error: error.message }
+        }
+      }
     }
   }
 
@@ -139,67 +164,74 @@ export async function saveLoaDraft(
   return { success: true, data: { id: loaId, doc_no: docNo } }
 }
 
-/**
- * Muat draft LoA tersimpan (jika ada) untuk re-hydrate wizard. Hanya bagian
- * yang dipersist di LoA: setup_location, items, pricing. Detail event lain
- * (nama, tanggal, dll) tetap bersumber dari order di halaman.
- */
+/** Muat draft LoA tersimpan → pohon EventDraft[] + pricing. */
 export async function getLoaForEdit(orderId: string): Promise<SavedLoaDraft | null> {
   const supabase = await createClient()
   const { data: loa } = await supabase
     .from('loa')
-    .select(
-      'id, setup_location, service_charge_pct, handling_fee_type, handling_fee_value, discount_type, discount_value, loa_items(id, package_name, price_per_pax, pax, sort_order, loa_item_selections(component_name, occasion_no, category_name, item_name, sort_order))'
-    )
+    .select(`
+      id, service_charge_pct, handling_fee_type, handling_fee_value, discount_type, discount_value,
+      loa_events(
+        id, event_date, serving_time, venue, setup_location, pax, sort_order,
+        loa_items(
+          id, name, keterangan, pax, amount, sort_order,
+          loa_subgroups(id, name, keterangan, sort_order),
+          loa_menu_items(id, name, keterangan, sort_order, subgroup_id)
+        )
+      )
+    `)
     .eq('booking_id', orderId)
     .maybeSingle()
   if (!loa) return null
 
-  type RawSelection = {
-    component_name: string
-    occasion_no: number
-    category_name: string
-    item_name: string
-    sort_order: number
+  type RawMenuItem = { id: string; name: string; keterangan: string | null; sort_order: number; subgroup_id: string | null }
+  type RawSubGroup = { id: string; name: string; keterangan: string | null; sort_order: number }
+  type RawHeader = {
+    id: string; name: string; keterangan: string | null; pax: number; amount: number; sort_order: number
+    loa_subgroups: RawSubGroup[]; loa_menu_items: RawMenuItem[]
   }
-  type RawItem = {
-    id: string
-    package_name: string
-    price_per_pax: number
-    pax: number
-    sort_order: number
-    loa_item_selections: RawSelection[]
+  type RawEvent = {
+    id: string; event_date: string | null; serving_time: string | null; venue: string | null
+    setup_location: string | null; pax: number | null; sort_order: number; loa_items: RawHeader[]
   }
 
-  const items = (loa.loa_items as RawItem[])
-    .slice()
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((it) => ({
-      key: crypto.randomUUID(),
-      packageId: null,
-      packageName: it.package_name,
-      pricePerPax: Number(it.price_per_pax),
-      pax: it.pax,
-      selections: (it.loa_item_selections ?? [])
-        .slice()
-        .sort((a, b) => a.sort_order - b.sort_order)
-        .map((s) => ({
-          componentName: s.component_name,
-          occasionNo: s.occasion_no,
-          categoryId: '',
-          categoryName: s.category_name,
-          itemId: '',
-          itemName: s.item_name,
+  const bySort = <T extends { sort_order: number }>(arr: T[]) => arr.slice().sort((a, b) => a.sort_order - b.sort_order)
+
+  const events: EventDraft[] = bySort((loa.loa_events ?? []) as RawEvent[]).map((ev) => ({
+    key: crypto.randomUUID(),
+    eventDate: ev.event_date ?? '',
+    servingTime: ev.serving_time ?? '',
+    venue: ev.venue ?? '',
+    setupLocation: ev.setup_location ?? '',
+    pax: ev.pax ?? 0,
+    headers: bySort(ev.loa_items ?? []).map((h) => {
+      const menuItems = bySort(h.loa_menu_items ?? [])
+      return {
+        key: crypto.randomUUID(),
+        name: h.name,
+        keterangan: h.keterangan ?? '',
+        pax: h.pax,
+        amount: Number(h.amount),
+        items: menuItems
+          .filter((m) => m.subgroup_id === null)
+          .map((m) => ({ key: crypto.randomUUID(), name: m.name, keterangan: m.keterangan ?? '' })),
+        subGroups: bySort(h.loa_subgroups ?? []).map((sg) => ({
+          key: crypto.randomUUID(),
+          name: sg.name,
+          keterangan: sg.keterangan ?? '',
+          items: menuItems
+            .filter((m) => m.subgroup_id === sg.id)
+            .map((m) => ({ key: crypto.randomUUID(), name: m.name, keterangan: m.keterangan ?? '' })),
         })),
-    }))
+      }
+    }),
+  }))
 
   const discountValue = Number(loa.discount_value)
   return {
-    setupLocation: loa.setup_location ?? '',
-    items,
+    events,
     pricing: {
-      // scPct di-override di page dari tipe order; nilai ini hanya fallback.
-      scPct: Number(loa.service_charge_pct),
+      scPct: Number(loa.service_charge_pct), // di-override di page dari tipe order
       handlingType: loa.handling_fee_type === 'flat' ? 'flat' : 'percent',
       handlingValue: Number(loa.handling_fee_value),
       discountEnabled: discountValue > 0,

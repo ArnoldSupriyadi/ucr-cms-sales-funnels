@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { ORDER_STATUS_COLORS } from '@/lib/constants/status'
-import { formatDate } from '@/lib/utils/format'
+import { formatDateRange } from '@/lib/utils/format'
 import { FileText, ChevronRight, Eye } from 'lucide-react'
 import type { OrderWithLead } from '@/types/domain'
 
@@ -84,7 +84,7 @@ export function LoaOrdersTable({ orders, loaStatusByOrder }: LoaOrdersTableProps
                 {order.leads?.company_name ?? '-'}
               </td>
               <td className="hidden px-4 py-3 text-slate-600 md:table-cell">
-                {formatDate(order.event_date)}
+                {formatDateRange(order.event_date, order.event_date_end)}
               </td>
               <td className="px-4 py-3">
                 <Badge variant="outline" className={ORDER_STATUS_COLORS[order.status]}>

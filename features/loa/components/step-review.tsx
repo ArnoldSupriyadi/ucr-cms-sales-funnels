@@ -5,16 +5,18 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { formatRupiah } from '@/lib/utils/format'
-import { groupSelectionLines } from '@/lib/loa/menu-detail-lines'
+import { formatRupiah, formatDate } from '@/lib/utils/format'
 import { saveLoaDraft } from '../actions'
 import { useLoaForm } from '../loa-form-context'
 
 export function StepReview() {
   const { state, calc, meta, orderId } = useLoaForm()
-  const { items } = state
+  const { events } = state
   const router = useRouter()
   const [saving, setSaving] = useState(false)
+
+  const headerCount = events.reduce((n, e) => n + e.headers.length, 0)
+  const canSave = headerCount > 0
 
   async function handleSave() {
     setSaving(true)
@@ -38,48 +40,30 @@ export function StepReview() {
           <b>Order:</b> {meta.orderNo} · <b>Klien:</b> {meta.client.name}
         </p>
         <div>
-          <p className="font-semibold">Item ({items.length}):</p>
+          <p className="font-semibold">
+            {events.length} event · {headerCount} header
+          </p>
           <ul className="mt-1 list-disc space-y-1 pl-5">
-            {items.length === 0 && <li className="text-slate-400">—</li>}
-            {items.map((i) => {
-              const lines = groupSelectionLines(i.selections)
-              return (
-                <li key={i.key}>
-                  {i.packageName} — {i.pax} pax × {formatRupiah(i.pricePerPax)} ={' '}
-                  <b>{formatRupiah(i.pax * i.pricePerPax)}</b>
-                  {lines.length > 0 && (
-                    <div className="mt-1 space-y-1.5">
-                      {lines.map((ln, idx) => (
-                        <div key={idx}>
-                          <div className="text-[12px] font-semibold text-slate-600">{ln.group}</div>
-                          <ul className="mt-0.5 list-disc space-y-0.5 pl-5 text-[12px] text-slate-500 marker:text-slate-300">
-                            {ln.items.map((item, j) => (
-                              <li key={j}>{item}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              )
-            })}
+            {events.length === 0 && <li className="text-slate-400">—</li>}
+            {events.map((ev, idx) => (
+              <li key={ev.key}>
+                Event {idx + 1}
+                {ev.eventDate ? ` (${formatDate(ev.eventDate)})` : ''}: {ev.headers.length} header —{' '}
+                {formatRupiah(ev.headers.reduce((s, h) => s + h.amount, 0))}
+              </li>
+            ))}
           </ul>
         </div>
         <p>
           <b>Grand Total: {formatRupiah(calc.grandTotal)}</b> · Net Revenue: {formatRupiah(calc.netRevenue)}
         </p>
         <div className="flex gap-2.5 pt-2">
-          <Button
-            variant="outline"
-            disabled={saving}
-            onClick={() => router.push(`/orders/${orderId}`)}
-          >
+          <Button variant="outline" disabled={saving} onClick={() => router.push(`/orders/${orderId}`)}>
             Batal
           </Button>
           <Button
             className="bg-green-600 hover:bg-green-700"
-            disabled={saving || items.length === 0}
+            disabled={saving || !canSave}
             onClick={handleSave}
           >
             {saving ? 'Menyimpan…' : '💾 Simpan Draft'}

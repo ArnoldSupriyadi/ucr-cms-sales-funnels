@@ -6,22 +6,20 @@ import { Button } from '@/components/ui/button'
 import { useLoaForm } from '../loa-form-context'
 import { UMARA_COMPANY } from '../company'
 import { hariID, tanggalID } from '@/lib/utils/date-id'
+import { formatRupiah } from '@/lib/utils/format'
 import styles from './doc-preview.module.css'
 
 export function DocPreview() {
-  const { state, meta, salesUsers } = useLoaForm()
-  const { detail } = state
-  const { client } = meta
+  const { state, meta, salesUsers, calc } = useLoaForm()
+  const { detail, events, pricing } = state
   const sales = salesUsers.find((u) => u.id === detail.salesId)
 
   function handleDownload() {
-    // Nama file: LOA-<klien> - DD-MM-YYYY (hari ini). Buang karakter ilegal nama file.
-    const safeClient = (client.name || 'Klien').replace(/[\\/:*?"<>|]/g, '').trim()
+    const safeClient = (meta.client.name || 'Klien').replace(/[\\/:*?"<>|]/g, '').trim()
     const now = new Date()
     const dd = String(now.getDate()).padStart(2, '0')
     const mm = String(now.getMonth() + 1).padStart(2, '0')
     const filename = `LOA-${safeClient} - ${dd}-${mm}-${now.getFullYear()}`
-
     const prevTitle = document.title
     const restore = () => {
       document.title = prevTitle
@@ -31,6 +29,8 @@ export function DocPreview() {
     document.title = filename
     window.print()
   }
+
+  const td = 'border border-slate-400 px-2.5 py-1.5 align-top'
 
   return (
     <div className={styles.wrap}>
@@ -61,22 +61,17 @@ export function DocPreview() {
           <div>antara</div>
           <div className={styles.party}>{UMARA_COMPANY.legalName}</div>
           <div>dan</div>
-          <div className={styles.party}>{client.name}</div>
+          <div className={styles.party}>{meta.client.name}</div>
         </div>
 
         <div className={styles.cols}>
           <div className={styles.dl}>
-            <span className={styles.k}>Nama</span><span>{client.name}</span>
-            <span className={styles.k}>Segmen</span><span>{client.segmen}</span>
-            <span className={styles.k}>Alamat</span><span>{client.address}</span>
-            <span className={styles.k}>PIC</span><span>{client.picName}</span>
-            <span className={styles.k}>HP</span><span>{client.picPhone}</span>
+            <span className={styles.k}>Nama</span><span>{meta.client.name}</span>
+            <span className={styles.k}>Segmen</span><span>{meta.client.segmen}</span>
+            <span className={styles.k}>Alamat</span><span>{meta.client.address}</span>
+            <span className={styles.k}>PIC</span><span>{meta.client.picName}</span>
+            <span className={styles.k}>HP</span><span>{meta.client.picPhone}</span>
             <span className={styles.k}>Nama Kegiatan</span><span>{detail.eventName || '—'}</span>
-            <span className={styles.k}>Alamat Kegiatan</span><span>{detail.eventAddress || '—'}</span>
-            <span className={styles.k}>Tanggal Kegiatan</span><span>{tanggalID(detail.eventDate)}</span>
-            <span className={styles.k}>Hari</span><span>{hariID(detail.eventDate)}</span>
-            <span className={styles.k}>Waktu</span><span>{detail.eventTime || '—'}</span>
-            <span className={styles.k}>Pax</span><span>{detail.pax || '—'}</span>
           </div>
           <div className={styles.dl} style={{ alignContent: 'start' }}>
             <span className={styles.k}>Properti</span><span>{UMARA_COMPANY.brandName}</span>
@@ -92,23 +87,123 @@ export function DocPreview() {
           Perjanjian penyediaan jasa catering ini menyepakati beberapa hal di bawah ini :
         </p>
 
-        <div className={styles.secTitle}>I. WAKTU &amp; TEMPAT KEGIATAN</div>
+        {/* 1. Waktu & Tempat (multi-event) */}
+        <div className={styles.secTitle}>1. WAKTU &amp; TEMPAT KEGIATAN</div>
         <table className={styles.wt}>
           <thead>
             <tr>{['Tgl.', 'Hari', 'Waktu siap saji', 'Tempat', 'Set Up', 'Pax'].map((h) => <th key={h}>{h}</th>)}</tr>
           </thead>
           <tbody>
-            <tr>
-              <td>{tanggalID(detail.eventDate)}</td>
-              <td>{hariID(detail.eventDate)}</td>
-              <td>{detail.eventTime || '—'}</td>
-              <td className={styles.tempat}>{detail.eventAddress || '—'}</td>
-              <td>{detail.setupLocation || ''}</td>
-              <td>{detail.pax || '—'}</td>
+            {events.length === 0 && (
+              <tr><td colSpan={6} style={{ textAlign: 'center' }}>—</td></tr>
+            )}
+            {events.map((ev) => (
+              <tr key={ev.key}>
+                <td>{ev.eventDate ? tanggalID(ev.eventDate) : '—'}</td>
+                <td>{ev.eventDate ? hariID(ev.eventDate) : '—'}</td>
+                <td>{ev.servingTime || '—'}</td>
+                <td className={styles.tempat}>{ev.venue || '—'}</td>
+                <td>{ev.setupLocation || ''}</td>
+                <td>{ev.pax || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* 2. Biaya Jasa Katering (pohon per event) */}
+        <div className={styles.secTitle} style={{ marginTop: 14 }}>2. BIAYA JASA KATERING</div>
+        <p className="mb-1.5 text-[12.5px] text-slate-600">
+          Biaya penyediaan jasa katering, mencakup makanan &amp; minuman sesuai menu yang dipilih
+          (sudah termasuk pajak dan biaya lainnya) adalah sbb:
+        </p>
+        <table className="w-full border-collapse text-[12px]">
+          <thead>
+            <tr className="bg-slate-100">
+              <th className={td + ' text-left'}>Tgl.</th>
+              <th className={td + ' text-left'}>Order</th>
+              <th className={td + ' text-right'}>Price</th>
+              <th className={td + ' text-center'}>Pax</th>
+              <th className={td + ' text-right'}>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.map((ev) =>
+              ev.headers.map((h, hIdx) => {
+                const price = h.pax > 0 ? h.amount / h.pax : 0
+                return (
+                  <FragmentRows key={h.key}>
+                    <tr>
+                      <td className={td}>{hIdx === 0 && ev.eventDate ? tanggalID(ev.eventDate) : ''}</td>
+                      <td className={td + ' font-semibold'}>
+                        {h.name || '—'}
+                        {h.keterangan ? <span className="font-normal text-slate-500"> — {h.keterangan}</span> : null}
+                      </td>
+                      <td className={td + ' text-right'}>{price > 0 ? formatRupiah(price) : '—'}</td>
+                      <td className={td + ' text-center'}>{h.pax || '—'}</td>
+                      <td className={td + ' text-right font-semibold'}>{formatRupiah(h.amount)}</td>
+                    </tr>
+                    {h.items.map((it) => (
+                      <tr key={it.key}>
+                        <td className={td}></td>
+                        <td className={td} colSpan={4}>
+                          • {it.name}
+                          {it.keterangan ? <span className="text-slate-500"> — {it.keterangan}</span> : null}
+                        </td>
+                      </tr>
+                    ))}
+                    {h.subGroups.map((sg) => (
+                      <FragmentRows key={sg.key}>
+                        <tr>
+                          <td className={td}></td>
+                          <td className={td + ' font-semibold'} colSpan={4}>{sg.name}</td>
+                        </tr>
+                        {sg.items.map((it) => (
+                          <tr key={it.key}>
+                            <td className={td}></td>
+                            <td className={td} colSpan={4}>
+                              • {it.name}
+                              {it.keterangan ? <span className="text-slate-500"> — {it.keterangan}</span> : null}
+                            </td>
+                          </tr>
+                        ))}
+                      </FragmentRows>
+                    ))}
+                  </FragmentRows>
+                )
+              }),
+            )}
+
+            {/* Totals */}
+            <TotalRow td={td} label="Sub Total 1" value={formatRupiah(calc.subTotal1)} />
+            {pricing.discountEnabled && (
+              <TotalRow td={td} label="Diskon" value={'− ' + formatRupiah(calc.discountAmt)} />
+            )}
+            <TotalRow td={td} label={`Service Charge (${pricing.scPct}%)`} value={formatRupiah(calc.serviceChargeAmt)} />
+            <TotalRow td={td} label="Sub Total 2 (Net Revenue)" value={formatRupiah(calc.subTotal2)} />
+            <TotalRow td={td} label="PB1 (10%)" value={formatRupiah(calc.pb1Amt)} />
+            <TotalRow td={td} label={`Handling (${pricing.handlingType === 'percent' ? `${pricing.handlingValue}%` : 'flat'})`} value={formatRupiah(calc.handlingFeeAmt)} />
+            <tr className="bg-slate-100 font-bold">
+              <td className={td} colSpan={3}></td>
+              <td className={td + ' text-right'}>GRAND TOTAL</td>
+              <td className={td + ' text-right'}>{formatRupiah(calc.grandTotal)}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+  )
+}
+
+function FragmentRows({ children }: { children: React.ReactNode }) {
+  return <>{children}</>
+}
+
+function TotalRow({ td, label, value }: { td: string; label: string; value: string }) {
+  return (
+    <tr>
+      <td className={td} colSpan={3}></td>
+      <td className={td + ' text-right text-slate-600'}>{label}</td>
+      <td className={td + ' text-right'}>{value}</td>
+    </tr>
   )
 }

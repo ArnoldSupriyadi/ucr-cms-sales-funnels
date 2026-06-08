@@ -1,7 +1,9 @@
 'use client'
 
 import Image from 'next/image'
+import { Trash2, Plus } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -9,11 +11,11 @@ import {
 } from '@/components/ui/select'
 import { useLoaForm } from '../loa-form-context'
 import { UMARA_COMPANY } from '../company'
-import { hariID, tanggalID } from '@/lib/utils/date-id'
+import { hariID } from '@/lib/utils/date-id'
 
 export function StepDetail() {
   const { state, dispatch, meta, salesUsers } = useLoaForm()
-  const { detail } = state
+  const { detail, events } = state
   const { client } = meta
   const sales = salesUsers.find((u) => u.id === detail.salesId)
 
@@ -31,18 +33,6 @@ export function StepDetail() {
           </div>
         </div>
 
-        {/* Header dokumen */}
-        <div className="rounded-lg border bg-slate-50/50 px-4 py-3.5 text-[13px]">
-          <div className="flex justify-between text-slate-500">
-            <span>No. Dokumen: <b className="text-slate-900">{UMARA_COMPANY.docNo}</b></span>
-            <span>Revisi: <b className="text-slate-900">00</b></span>
-          </div>
-          <div className="my-3 text-center text-[15px] font-bold leading-relaxed">
-            SURAT PERJANJIAN PENYEDIAAN JASA KATERING<br />
-            antara {UMARA_COMPANY.legalName} dan <u className="decoration-indigo-600">{client.name}</u>
-          </div>
-        </div>
-
         {/* Data Klien (readonly) */}
         <GroupLabel>Data Klien <Src>dari leads</Src></GroupLabel>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -55,31 +45,57 @@ export function StepDetail() {
           <ReadField label="HP" value={client.picPhone} />
         </div>
 
-        {/* Detail Kegiatan (editable) */}
-        <GroupLabel>Detail Kegiatan <Src>input sales</Src></GroupLabel>
+        {/* Nama Kegiatan (LoA-level) */}
+        <GroupLabel>Kegiatan <Src>input sales</Src></GroupLabel>
         <EditField label="Nama Kegiatan" value={detail.eventName}
           onChange={(v) => dispatch({ type: 'SET_DETAIL_FIELD', field: 'eventName', value: v })} />
-        <EditField label="Alamat Kegiatan" value={detail.eventAddress}
-          onChange={(v) => dispatch({ type: 'SET_DETAIL_FIELD', field: 'eventAddress', value: v })} />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-500">Tanggal Kegiatan</Label>
-            <Input type="date" value={detail.eventDate}
-              onChange={(e) => dispatch({ type: 'SET_DETAIL_FIELD', field: 'eventDate', value: e.target.value })} />
-          </div>
-          <ReadField label="Hari (auto)" value={hariID(detail.eventDate)} />
+
+        {/* Event (multi-tanggal) */}
+        <div className="flex items-center justify-between pt-1">
+          <GroupLabel>Waktu &amp; Tempat <Src>per event</Src></GroupLabel>
+          <Button type="button" size="sm" variant="outline" className="gap-1.5"
+            onClick={() => dispatch({ type: 'ADD_EVENT' })}>
+            <Plus className="h-3.5 w-3.5" /> Tambah Event
+          </Button>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <EditField label="Waktu" value={detail.eventTime}
-            onChange={(v) => dispatch({ type: 'SET_DETAIL_FIELD', field: 'eventTime', value: v })} />
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-500">Pax</Label>
-            <Input type="number" min={1} value={detail.pax || ''}
-              onChange={(e) => dispatch({ type: 'SET_DETAIL_FIELD', field: 'pax', value: Number(e.target.value) })} />
+
+        {events.length === 0 && (
+          <p className="text-sm text-slate-400">Belum ada event. Klik &ldquo;Tambah Event&rdquo;.</p>
+        )}
+
+        {events.map((ev, idx) => (
+          <div key={ev.key} className="space-y-3 rounded-lg border px-4 py-3.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-indigo-600">Event {idx + 1}</span>
+              <button type="button"
+                className="inline-flex items-center gap-1 text-[13px] text-slate-400 hover:text-red-600"
+                onClick={() => dispatch({ type: 'REMOVE_EVENT', eventKey: ev.key })}>
+                <Trash2 className="h-3.5 w-3.5" /> hapus
+              </button>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-slate-500">Tanggal</Label>
+                <Input type="date" value={ev.eventDate}
+                  onChange={(e) => dispatch({ type: 'SET_EVENT_FIELD', eventKey: ev.key, field: 'eventDate', value: e.target.value })} />
+              </div>
+              <ReadField label="Hari (auto)" value={ev.eventDate ? hariID(ev.eventDate) : '—'} />
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <EditField label="Waktu siap saji" value={ev.servingTime} placeholder="08:00 - 17:00"
+                onChange={(v) => dispatch({ type: 'SET_EVENT_FIELD', eventKey: ev.key, field: 'servingTime', value: v })} />
+              <div className="space-y-1.5">
+                <Label className="text-xs text-slate-500">Pax</Label>
+                <Input type="number" min={0} value={ev.pax || ''}
+                  onChange={(e) => dispatch({ type: 'SET_EVENT_FIELD', eventKey: ev.key, field: 'pax', value: Number(e.target.value) })} />
+              </div>
+            </div>
+            <EditField label="Tempat" value={ev.venue} placeholder="Nama gedung / ruang"
+              onChange={(v) => dispatch({ type: 'SET_EVENT_FIELD', eventKey: ev.key, field: 'venue', value: v })} />
+            <EditField label="Set Up" value={ev.setupLocation} placeholder="mis. mulai setup 06:00"
+              onChange={(v) => dispatch({ type: 'SET_EVENT_FIELD', eventKey: ev.key, field: 'setupLocation', value: v })} />
           </div>
-        </div>
-        <EditField label="Set Up" value={detail.setupLocation} placeholder="mis. mulai setup 06:00 / standing party"
-          onChange={(v) => dispatch({ type: 'SET_DETAIL_FIELD', field: 'setupLocation', value: v })} />
+        ))}
 
         {/* Pihak Umara */}
         <GroupLabel>Pihak Umara Catering</GroupLabel>
@@ -99,28 +115,6 @@ export function StepDetail() {
           <ReadField label="HP Sales" value={sales?.phone ?? '—'} />
           <ReadField label="Email Sales" value={sales?.email ?? '—'} />
         </div>
-
-        {/* Section I */}
-        <div className="pt-2 text-sm font-bold">I. WAKTU &amp; TEMPAT KEGIATAN</div>
-        <table className="w-full border-collapse text-[12.5px]">
-          <thead>
-            <tr className="bg-slate-100">
-              {['Tgl.', 'Hari', 'Waktu siap saji', 'Tempat', 'Set Up', 'Pax'].map((h) => (
-                <th key={h} className="border border-slate-400 px-2.5 py-2 font-bold">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="border border-slate-400 px-2.5 py-2 text-center">{tanggalID(detail.eventDate)}</td>
-              <td className="border border-slate-400 px-2.5 py-2 text-center">{hariID(detail.eventDate)}</td>
-              <td className="border border-slate-400 px-2.5 py-2 text-center">{detail.eventTime || '—'}</td>
-              <td className="border border-slate-400 px-2.5 py-2 text-left">{detail.eventAddress || '—'}</td>
-              <td className="border border-slate-400 px-2.5 py-2 text-center">{detail.setupLocation || ''}</td>
-              <td className="border border-slate-400 px-2.5 py-2 text-center">{detail.pax || '—'}</td>
-            </tr>
-          </tbody>
-        </table>
       </CardContent>
     </Card>
   )

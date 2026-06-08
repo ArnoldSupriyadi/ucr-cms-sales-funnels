@@ -5,8 +5,8 @@ import { loaFormReducer, type LoaFormAction } from './loa-form-reducer'
 import { calculateLoa, type LoaCalcResult } from '@/lib/loa/calculations'
 import {
   DEFAULT_PRICING,
+  type EventDraft,
   type InitialLoaData,
-  type LoaItemDraft,
   type LoaPricingDraft,
   type LoaWizardState,
   type SalesUser,
@@ -27,30 +27,26 @@ export function LoaFormProvider({
   orderId,
   initial,
   salesUsers,
-  initialItems,
+  initialEvents,
   initialPricing,
   children,
 }: {
   orderId: string
   initial: InitialLoaData
   salesUsers: SalesUser[]
-  initialItems?: LoaItemDraft[]
+  initialEvents?: EventDraft[]
   initialPricing?: LoaPricingDraft
   children: ReactNode
 }) {
   const [state, dispatch] = useReducer(loaFormReducer, {
     detail: initial.detail,
-    items: initialItems ?? [],
+    events: initialEvents ?? [],
     pricing: initialPricing ?? { ...DEFAULT_PRICING },
   })
 
   const calc = useMemo(
-    () =>
-      calculateLoa(
-        state.items.map((i) => ({ pricePerPax: i.pricePerPax, pax: i.pax })),
-        state.pricing,
-      ),
-    [state.items, state.pricing],
+    () => calculateLoa(state.events.flatMap((e) => e.headers).map((h) => h.amount), state.pricing),
+    [state.events, state.pricing],
   )
 
   const value = useMemo<LoaFormContextValue>(

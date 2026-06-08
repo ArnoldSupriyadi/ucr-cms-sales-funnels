@@ -4,7 +4,7 @@ import { getAppUser } from '@/lib/auth/permissions'
 import { loadMenuCatalog } from '@/lib/loa/catalog'
 import { getLoaForEdit } from '@/features/loa/actions'
 import { LoaForm } from '@/features/loa/components/loa-form'
-import { DEFAULT_PRICING, type InitialLoaData, type LoaPricingDraft, type SalesUser } from '@/features/loa/types'
+import { DEFAULT_PRICING, type EventDraft, type InitialLoaData, type LoaPricingDraft, type SalesUser } from '@/features/loa/types'
 import { serviceChargePctForType } from '@/lib/constants/order-type'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,7 @@ export default async function LoaPage({
     supabase
       .from('orders')
       .select(`
-        id, order_no, event_name, event_date, event_time, venue, pax, sales_id, order_type,
+        id, order_no, event_name, event_date, event_date_end, event_time, venue, pax, sales_id, order_type,
         leads(company_name, segmen, address, lead_contacts(name, phone, is_primary))
       `)
       .eq('id', id)
@@ -77,10 +77,24 @@ export default async function LoaPage({
       eventDate: order.event_date ?? '',
       eventTime: order.event_time ?? '',
       pax: order.pax ?? 0,
-      setupLocation: saved?.setupLocation ?? '',
+      setupLocation: '',
       salesId: order.sales_id ?? '',
     },
   }
+
+  // Event awal: dari LoA tersimpan; bila belum ada, seed 1 event dari data order.
+  const seededEvents: EventDraft[] = [
+    {
+      key: crypto.randomUUID(),
+      eventDate: order.event_date ?? '',
+      servingTime: order.event_time ?? '',
+      venue: order.venue ?? '',
+      setupLocation: '',
+      pax: order.pax ?? 0,
+      headers: [],
+    },
+  ]
+  const initialEvents = saved?.events.length ? saved.events : seededEvents
 
   // Service Charge selalu di-override dari tipe order (single source of truth), bukan dari LoA tersimpan.
   const scPct = serviceChargePctForType(order.order_type)
@@ -113,7 +127,7 @@ export default async function LoaPage({
         initial={initial}
         salesUsers={salesUsers}
         catalog={catalog}
-        initialItems={saved?.items}
+        initialEvents={initialEvents}
         initialPricing={initialPricing}
       />
     </>

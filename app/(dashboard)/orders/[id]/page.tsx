@@ -10,7 +10,7 @@ import { StatusChangeActions } from '@/features/orders/components/status-change-
 import { ORDER_STATUS_COLORS, ORDER_STATUS_TRANSITIONS } from '@/lib/constants/status'
 import { SEGMEN_COLORS } from '@/lib/constants/segmen'
 import { ORDER_TYPES, serviceChargePctForType, type OrderTypeKey } from '@/lib/constants/order-type'
-import { formatDate } from '@/lib/utils/format'
+import { formatDateRange } from '@/lib/utils/format'
 import {
   Pencil,
   CalendarDays,
@@ -155,7 +155,7 @@ export default async function OrderDetailPage({
                   <dt className="text-slate-500">Tanggal Event</dt>
                   <dd className="font-medium mt-0.5 flex items-center gap-1.5">
                     <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
-                    {formatDate(order.event_date)}
+                    {formatDateRange(order.event_date, order.event_date_end)}
                   </dd>
                 </div>
                 {order.event_time && (
