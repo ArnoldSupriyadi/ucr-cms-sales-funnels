@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,10 +10,11 @@ import { hariID, tanggalID } from '@/lib/utils/date-id'
 import { formatRupiah, formatDateRange } from '@/lib/utils/format'
 import styles from './doc-preview.module.css'
 
-export function DocPreview() {
+export function DocPreview({ autoPrint = false }: { autoPrint?: boolean }) {
   const { state, meta, salesUsers, calc } = useLoaForm()
   const { detail, events, pricing } = state
   const sales = salesUsers.find((u) => u.id === detail.salesId)
+  const printed = useRef(false)
 
   function handleDownload() {
     const safeClient = (meta.client.name || 'Klien').replace(/[\\/:*?"<>|]/g, '').trim()
@@ -29,6 +31,16 @@ export function DocPreview() {
     document.title = filename
     window.print()
   }
+
+  // Auto-print saat dibuka via tombol Download di list (?print=1)
+  useEffect(() => {
+    if (autoPrint && !printed.current) {
+      printed.current = true
+      const t = setTimeout(handleDownload, 400)
+      return () => clearTimeout(t)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPrint])
 
   const td = 'border border-slate-400 px-2.5 py-1.5 align-top'
 

@@ -26,6 +26,7 @@ interface LoaFormProps {
   catalog: MenuCatalog
   initialEvents?: EventDraft[]
   initialPricing?: LoaPricingDraft
+  autoPrintDoc?: boolean
 }
 
 export function LoaForm({
@@ -35,6 +36,7 @@ export function LoaForm({
   catalog,
   initialEvents,
   initialPricing,
+  autoPrintDoc = false,
 }: LoaFormProps) {
   return (
     <LoaFormProvider
@@ -44,15 +46,15 @@ export function LoaForm({
       initialEvents={initialEvents}
       initialPricing={initialPricing}
     >
-      <LoaFormBody catalog={catalog} />
+      <LoaFormBody catalog={catalog} autoPrintDoc={autoPrintDoc} />
     </LoaFormProvider>
   )
 }
 
-function LoaFormBody({ catalog }: { catalog: MenuCatalog }) {
+function LoaFormBody({ catalog, autoPrintDoc }: { catalog: MenuCatalog; autoPrintDoc: boolean }) {
   const { state, meta } = useLoaForm()
   const [step, setStep] = useState(0)
-  const [view, setView] = useState<'form' | 'doc'>('form')
+  const [view, setView] = useState<'form' | 'doc'>(autoPrintDoc ? 'doc' : 'form')
 
   const go = (dir: number) => setStep((s) => Math.max(0, Math.min(3, s + dir)))
 
@@ -88,7 +90,7 @@ function LoaFormBody({ catalog }: { catalog: MenuCatalog }) {
       </div>
 
       {view === 'doc' ? (
-        <DocPreview />
+        <DocPreview autoPrint={autoPrintDoc} />
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
           <div>

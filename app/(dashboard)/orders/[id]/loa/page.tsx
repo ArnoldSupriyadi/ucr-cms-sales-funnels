@@ -12,10 +12,13 @@ import { AlertTriangle } from 'lucide-react'
 
 export default async function LoaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ print?: string }>
 }) {
   const { id } = await params
+  const autoPrintDoc = (await searchParams).print === '1'
   const [supabase, user] = await Promise.all([createClient(), getAppUser()])
   if (!user) return null
   if (!user.permissions['loa.create']) redirect(`/orders/${id}`)
@@ -148,6 +151,7 @@ export default async function LoaPage({
         catalog={catalog}
         initialEvents={initialEvents}
         initialPricing={initialPricing}
+        autoPrintDoc={autoPrintDoc}
       />
     </>
   )

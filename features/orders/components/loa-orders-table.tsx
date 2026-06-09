@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { ORDER_STATUS_COLORS } from '@/lib/constants/status'
 import { formatDateRange } from '@/lib/utils/format'
-import { FileText, ChevronRight, Eye } from 'lucide-react'
+import { FileText, ChevronRight, Eye, Download } from 'lucide-react'
 import type { OrderWithLead } from '@/types/domain'
 
 interface LoaOrdersTableProps {
@@ -98,6 +98,17 @@ export function LoaOrdersTable({ orders, loaStatusByOrder }: LoaOrdersTableProps
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-2">
+                  {loaStatus && (
+                    <Link
+                      href={`/orders/${order.id}/loa?print=1`}
+                      target="_blank"
+                      title="Unduh dokumen LOA (PDF)"
+                      className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Download
+                    </Link>
+                  )}
                   <Link
                     href={`/orders/${order.id}`}
                     className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
