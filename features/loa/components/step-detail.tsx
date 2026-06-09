@@ -12,6 +12,7 @@ import {
 import { useLoaForm } from '../loa-form-context'
 import { UMARA_COMPANY } from '../company'
 import { hariID } from '@/lib/utils/date-id'
+import { formatDateRange } from '@/lib/utils/format'
 
 export function StepDetail() {
   const { state, dispatch, meta, salesUsers } = useLoaForm()
@@ -47,8 +48,11 @@ export function StepDetail() {
 
         {/* Nama Kegiatan (LOA-level) */}
         <GroupLabel>Kegiatan <Src>input sales</Src></GroupLabel>
-        <EditField label="Nama Kegiatan" value={detail.eventName}
-          onChange={(v) => dispatch({ type: 'SET_DETAIL_FIELD', field: 'eventName', value: v })} />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <EditField label="Nama Kegiatan" value={detail.eventName}
+            onChange={(v) => dispatch({ type: 'SET_DETAIL_FIELD', field: 'eventName', value: v })} />
+          <ReadField label="Tanggal Kegiatan" value={meta.eventDateStart ? formatDateRange(meta.eventDateStart, meta.eventDateEnd) : '—'} />
+        </div>
 
         {/* Event (multi-tanggal) */}
         <div className="flex items-center justify-between pt-1">
