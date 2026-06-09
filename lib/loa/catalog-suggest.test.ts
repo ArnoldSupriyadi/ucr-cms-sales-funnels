@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { searchMenuItems, searchCategories, searchPackages, packageToHeader } from './catalog-suggest'
+import { searchMenuItems, searchCategories, searchItemsInCategory, searchPackages, packageToHeader } from './catalog-suggest'
 import type { MenuCatalog } from '@/features/loa/types'
 
 const catalog = {
@@ -46,10 +46,19 @@ describe('searchPackages', () => {
 })
 
 describe('searchCategories', () => {
-  it('cari nama kategori daun; kosong → []', () => {
+  it('cari nama kategori daun; kosong → semua (terurut)', () => {
     expect(searchCategories(catalog, 'sav')).toContain('Savoury')
     expect(searchCategories(catalog, 'bee')).toContain('Beef')
-    expect(searchCategories(catalog, '')).toEqual([])
+    expect(searchCategories(catalog, '')).toEqual(['Beef', 'Savoury'])
+  })
+})
+
+describe('searchItemsInCategory', () => {
+  it('item kategori (kosong→semua), filter query, kategori kosong→[]', () => {
+    expect(searchItemsInCategory(catalog, 'Savoury', '')).toEqual(['Risoles', 'Lemper', 'Pastel', 'Sosis'])
+    expect(searchItemsInCategory(catalog, 'Savoury', 'pas')).toEqual(['Pastel'])
+    expect(searchItemsInCategory(catalog, 'Beef', '')).toEqual(['Rendang'])
+    expect(searchItemsInCategory(catalog, '', '')).toEqual([])
   })
 })
 

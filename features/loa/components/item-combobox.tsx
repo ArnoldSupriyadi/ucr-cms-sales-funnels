@@ -2,28 +2,36 @@
 
 import { useMemo, useState } from 'react'
 import { Input } from '@/components/ui/input'
-import { searchMenuItems } from '@/lib/loa/catalog-suggest'
+import { searchMenuItems, searchItemsInCategory } from '@/lib/loa/catalog-suggest'
 import type { MenuCatalog } from '../types'
 
 /**
  * Input nama menu bebas-ketik dengan saran dari katalog (dropdown ringan, tanpa portal).
- * Dipakai di editor pohon (bukan di dalam Sheet) → aman dari masalah scroll RemoveScroll.
+ * Bila `categoryName` diisi (nama Jenis Menu, mis. "Beef"), saran difokuskan ke item kategori itu
+ * (fokus tanpa ketik → tampil semua item kategori). Tanpa kategori → saran global.
  */
 export function ItemCombobox({
   value,
   onChange,
   catalog,
+  categoryName,
   placeholder,
 }: {
   value: string
   onChange: (v: string) => void
   catalog: MenuCatalog
+  categoryName?: string
   placeholder?: string
 }) {
   const [focused, setFocused] = useState(false)
+  const scoped = !!categoryName && searchItemsInCategory(catalog, categoryName, '').length > 0
   const suggestions = useMemo(
-    () => searchMenuItems(catalog, value).filter((s) => s.toLowerCase() !== value.trim().toLowerCase()),
-    [catalog, value],
+    () =>
+      (scoped
+        ? searchItemsInCategory(catalog, categoryName!, value)
+        : searchMenuItems(catalog, value)
+      ).filter((s) => s.toLowerCase() !== value.trim().toLowerCase()),
+    [catalog, categoryName, scoped, value],
   )
   const show = focused && suggestions.length > 0
 
@@ -31,13 +39,13 @@ export function ItemCombobox({
     <div className="relative w-full">
       <Input
         value={value}
-        placeholder={placeholder ?? 'Nama makanan/minuman'}
+        placeholder={placeholder ?? (scoped ? `Pilih/ketik item ${categoryName}` : 'Nama makanan/minuman')}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 120)}
       />
       {show && (
-        <div className="absolute z-50 mt-1 max-h-44 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
+        <div className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
           {suggestions.map((s) => (
             <button
               key={s}

@@ -28,15 +28,30 @@ export function searchPackages(catalog: MenuCatalog, query: string, kategori?: s
   return [...names].slice(0, 20)
 }
 
-/** Daftar nama kategori daun unik dari katalog yang cocok query. Query kosong → []. Maks 20. */
+/** Daftar nama kategori daun unik dari katalog (cari/browse). Query kosong → SEMUA (terurut). Maks 30. */
 export function searchCategories(catalog: MenuCatalog, query: string): string[] {
   const q = query.trim().toLowerCase()
-  if (!q) return []
   const names = new Set<string>()
   for (const cats of Object.values(catalog.categoriesByComponentType)) {
-    for (const c of cats) if (c.nama.toLowerCase().includes(q)) names.add(c.nama)
+    for (const c of cats) if (!q || c.nama.toLowerCase().includes(q)) names.add(c.nama)
   }
-  return [...names].slice(0, 20)
+  return [...names].sort((a, b) => a.localeCompare(b)).slice(0, 30)
+}
+
+/** Item milik kategori bernama `categoryName` (digabung lintas component_type, dedup), difilter query.
+ *  Query kosong → SEMUA item kategori itu. categoryName kosong → []. Maks 50. */
+export function searchItemsInCategory(catalog: MenuCatalog, categoryName: string, query: string): string[] {
+  const target = categoryName.trim().toLowerCase()
+  if (!target) return []
+  const q = query.trim().toLowerCase()
+  const names = new Set<string>()
+  for (const cats of Object.values(catalog.categoriesByComponentType)) {
+    for (const c of cats) {
+      if (c.nama.toLowerCase() !== target) continue
+      for (const it of c.items) if (!q || it.nama.toLowerCase().includes(q)) names.add(it.nama)
+    }
+  }
+  return [...names].slice(0, 50)
 }
 
 /** Buat SubGroupDraft dari kategori katalog (match nama) + SAMPLE item contoh. */

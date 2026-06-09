@@ -31,7 +31,7 @@ export function CategoryCombobox({
     <div className="relative w-full">
       <Input
         value={value}
-        placeholder={placeholder ?? 'Nama sub-kategori (mis. Savoury, Beef)'}
+        placeholder={placeholder ?? 'Cari/pilih jenis menu (Beef, Soup, Savoury…)'}
         className="text-sm font-medium"
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}

@@ -157,7 +157,7 @@ function SectionCard({ eventKey, headerKey, section, catalog }: { eventKey: stri
         </button>
         <button type="button" className={`${addBtn} bg-violet-50 text-violet-700 hover:bg-violet-100`}
           onClick={() => dispatch({ type: 'ADD_SUBGROUP', eventKey, headerKey, sectionKey: sk })}>
-          <Plus className="h-3.5 w-3.5" /> Sub-kategori
+          <Plus className="h-3.5 w-3.5" /> Jenis Menu
         </button>
       </div>
     </div>
@@ -172,7 +172,7 @@ function SubGroupCard({ eventKey, headerKey, sectionKey, subGroup, catalog }: {
   return (
     <div className="ml-2 space-y-2 rounded-md border-l-4 border-l-violet-400 bg-violet-50/40 py-1.5 pl-3 pr-2">
       <div className="flex items-center gap-2">
-        <span className={`${chip} shrink-0 bg-violet-100 text-violet-700`}>Sub</span>
+        <span className={`${chip} shrink-0 bg-violet-100 text-violet-700`}>Jenis Menu</span>
         <CategoryCombobox
           value={subGroup.name}
           catalog={catalog}
@@ -185,7 +185,7 @@ function SubGroupCard({ eventKey, headerKey, sectionKey, subGroup, catalog }: {
       </div>
       {subGroup.items.map((it) => (
         <ItemRow key={it.key} eventKey={eventKey} headerKey={headerKey} sectionKey={sectionKey} subGroupKey={gk}
-          itemKey={it.key} name={it.name} keterangan={it.keterangan} catalog={catalog} />
+          itemKey={it.key} name={it.name} keterangan={it.keterangan} catalog={catalog} categoryName={subGroup.name} />
       ))}
       <button type="button" className={`${addBtn} text-indigo-600 hover:bg-indigo-50`}
         onClick={() => dispatch({ type: 'ADD_ITEM', eventKey, headerKey, sectionKey, subGroupKey: gk })}>
@@ -195,15 +195,15 @@ function SubGroupCard({ eventKey, headerKey, sectionKey, subGroup, catalog }: {
   )
 }
 
-function ItemRow({ eventKey, headerKey, sectionKey, subGroupKey, itemKey, name, keterangan, catalog }: {
+function ItemRow({ eventKey, headerKey, sectionKey, subGroupKey, itemKey, name, keterangan, catalog, categoryName }: {
   eventKey: string; headerKey: string; sectionKey: string | null; subGroupKey: string | null
-  itemKey: string; name: string; keterangan: string; catalog: MenuCatalog
+  itemKey: string; name: string; keterangan: string; catalog: MenuCatalog; categoryName?: string
 }) {
   const { dispatch } = useLoaForm()
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1">
-        <ItemCombobox value={name} catalog={catalog}
+        <ItemCombobox value={name} catalog={catalog} categoryName={categoryName}
           onChange={(v) => dispatch({ type: 'SET_ITEM_FIELD', eventKey, headerKey, sectionKey, subGroupKey, itemKey, field: 'name', value: v })} />
       </div>
       <Input value={keterangan} placeholder="keterangan (mis. tidak pedas)" className="w-40 bg-white text-sm"
