@@ -123,38 +123,54 @@ export async function saveLoaDraft(
         .single()
       if (hErr || !insHeader) return { success: false, error: hErr?.message ?? 'Gagal simpan header' }
 
-      // item langsung (tanpa sub-grup)
-      for (let ii = 0; ii < h.items.length; ii++) {
-        const it = h.items[ii]
-        const { error } = await supabase.from('loa_menu_items').insert({
-          header_id: insHeader.id,
-          subgroup_id: null,
-          name: it.name,
-          keterangan: it.keterangan || null,
-          sort_order: ii,
-        })
-        if (error) return { success: false, error: error.message }
-      }
-
-      // sub-grup + itemnya
-      for (let si = 0; si < h.subGroups.length; si++) {
-        const sg = h.subGroups[si]
-        const { data: insSub, error: sErr } = await supabase
-          .from('loa_subgroups')
-          .insert({ header_id: insHeader.id, name: sg.name, keterangan: sg.keterangan || null, sort_order: si })
-          .select('id')
-          .single()
-        if (sErr || !insSub) return { success: false, error: sErr?.message ?? 'Gagal simpan sub-grup' }
-        for (let ii = 0; ii < sg.items.length; ii++) {
-          const it = sg.items[ii]
+      // helper insert daftar item pada lokasi (header / section / subgroup)
+      const insertItems = async (
+        items: { name: string; keterangan: string }[],
+        sectionId: string | null,
+        subgroupId: string | null,
+      ): Promise<string | null> => {
+        for (let ii = 0; ii < items.length; ii++) {
+          const it = items[ii]
           const { error } = await supabase.from('loa_menu_items').insert({
             header_id: insHeader.id,
-            subgroup_id: insSub.id,
+            section_id: sectionId,
+            subgroup_id: subgroupId,
             name: it.name,
             keterangan: it.keterangan || null,
             sort_order: ii,
           })
-          if (error) return { success: false, error: error.message }
+          if (error) return error.message
+        }
+        return null
+      }
+
+      // item langsung di header
+      const eHdr = await insertItems(h.items, null, null)
+      if (eHdr) return { success: false, error: eHdr }
+
+      // sections (komponen) → item langsung + sub-kategori
+      for (let si = 0; si < h.sections.length; si++) {
+        const sec = h.sections[si]
+        const { data: insSec, error: secErr } = await supabase
+          .from('loa_sections')
+          .insert({ header_id: insHeader.id, name: sec.name, keterangan: sec.keterangan || null, sort_order: si })
+          .select('id')
+          .single()
+        if (secErr || !insSec) return { success: false, error: secErr?.message ?? 'Gagal simpan komponen' }
+
+        const eSec = await insertItems(sec.items, insSec.id, null)
+        if (eSec) return { success: false, error: eSec }
+
+        for (let gi = 0; gi < sec.subGroups.length; gi++) {
+          const sg = sec.subGroups[gi]
+          const { data: insSub, error: subErr } = await supabase
+            .from('loa_subgroups')
+            .insert({ header_id: insHeader.id, section_id: insSec.id, name: sg.name, keterangan: sg.keterangan || null, sort_order: gi })
+            .select('id')
+            .single()
+          if (subErr || !insSub) return { success: false, error: subErr?.message ?? 'Gagal simpan sub-kategori' }
+          const eSub = await insertItems(sg.items, insSec.id, insSub.id)
+          if (eSub) return { success: false, error: eSub }
         }
       }
     }
@@ -175,8 +191,8 @@ export async function getLoaForEdit(orderId: string): Promise<SavedLoaDraft | nu
         id, event_date, serving_time, venue, setup_location, pax, sort_order,
         loa_items(
           id, name, keterangan, pax, amount, sort_order,
-          loa_subgroups(id, name, keterangan, sort_order),
-          loa_menu_items(id, name, keterangan, sort_order, subgroup_id)
+          loa_sections(id, name, keterangan, sort_order, loa_subgroups(id, name, keterangan, sort_order)),
+          loa_menu_items(id, name, keterangan, sort_order, section_id, subgroup_id)
         )
       )
     `)
@@ -184,11 +200,12 @@ export async function getLoaForEdit(orderId: string): Promise<SavedLoaDraft | nu
     .maybeSingle()
   if (!loa) return null
 
-  type RawMenuItem = { id: string; name: string; keterangan: string | null; sort_order: number; subgroup_id: string | null }
+  type RawMenuItem = { id: string; name: string; keterangan: string | null; sort_order: number; section_id: string | null; subgroup_id: string | null }
   type RawSubGroup = { id: string; name: string; keterangan: string | null; sort_order: number }
+  type RawSection = { id: string; name: string; keterangan: string | null; sort_order: number; loa_subgroups: RawSubGroup[] }
   type RawHeader = {
     id: string; name: string; keterangan: string | null; pax: number; amount: number; sort_order: number
-    loa_subgroups: RawSubGroup[]; loa_menu_items: RawMenuItem[]
+    loa_sections: RawSection[]; loa_menu_items: RawMenuItem[]
   }
   type RawEvent = {
     id: string; event_date: string | null; serving_time: string | null; venue: string | null
@@ -196,6 +213,7 @@ export async function getLoaForEdit(orderId: string): Promise<SavedLoaDraft | nu
   }
 
   const bySort = <T extends { sort_order: number }>(arr: T[]) => arr.slice().sort((a, b) => a.sort_order - b.sort_order)
+  const toItems = (ms: RawMenuItem[]) => ms.map((m) => ({ key: crypto.randomUUID(), name: m.name, keterangan: m.keterangan ?? '' }))
 
   const events: EventDraft[] = bySort((loa.loa_events ?? []) as RawEvent[]).map((ev) => ({
     key: crypto.randomUUID(),
@@ -212,16 +230,18 @@ export async function getLoaForEdit(orderId: string): Promise<SavedLoaDraft | nu
         keterangan: h.keterangan ?? '',
         pax: h.pax,
         amount: Number(h.amount),
-        items: menuItems
-          .filter((m) => m.subgroup_id === null)
-          .map((m) => ({ key: crypto.randomUUID(), name: m.name, keterangan: m.keterangan ?? '' })),
-        subGroups: bySort(h.loa_subgroups ?? []).map((sg) => ({
+        items: toItems(menuItems.filter((m) => m.section_id === null && m.subgroup_id === null)),
+        sections: bySort(h.loa_sections ?? []).map((sec) => ({
           key: crypto.randomUUID(),
-          name: sg.name,
-          keterangan: sg.keterangan ?? '',
-          items: menuItems
-            .filter((m) => m.subgroup_id === sg.id)
-            .map((m) => ({ key: crypto.randomUUID(), name: m.name, keterangan: m.keterangan ?? '' })),
+          name: sec.name,
+          keterangan: sec.keterangan ?? '',
+          items: toItems(menuItems.filter((m) => m.section_id === sec.id && m.subgroup_id === null)),
+          subGroups: bySort(sec.loa_subgroups ?? []).map((sg) => ({
+            key: crypto.randomUUID(),
+            name: sg.name,
+            keterangan: sg.keterangan ?? '',
+            items: toItems(menuItems.filter((m) => m.subgroup_id === sg.id)),
+          })),
         })),
       }
     }),

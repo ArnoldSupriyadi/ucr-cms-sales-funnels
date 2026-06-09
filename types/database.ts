@@ -963,7 +963,7 @@ export type Database = {
           }
         ]
       }
-      loa_subgroups: {
+      loa_sections: {
         Row: {
           id: string
           header_id: string
@@ -981,6 +981,41 @@ export type Database = {
         Update: {
           id?: string
           header_id?: string
+          name?: string
+          keterangan?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loa_sections_header_id_fkey"
+            columns: ["header_id"]
+            isOneToOne: false
+            referencedRelation: "loa_items"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      loa_subgroups: {
+        Row: {
+          id: string
+          header_id: string
+          section_id: string | null
+          name: string
+          keterangan: string | null
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          header_id: string
+          section_id?: string | null
+          name: string
+          keterangan?: string | null
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          header_id?: string
+          section_id?: string | null
           name?: string
           keterangan?: string | null
           sort_order?: number
@@ -992,6 +1027,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "loa_items"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loa_subgroups_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "loa_sections"
+            referencedColumns: ["id"]
           }
         ]
       }
@@ -999,6 +1041,7 @@ export type Database = {
         Row: {
           id: string
           header_id: string
+          section_id: string | null
           subgroup_id: string | null
           name: string
           keterangan: string | null
@@ -1007,6 +1050,7 @@ export type Database = {
         Insert: {
           id?: string
           header_id: string
+          section_id?: string | null
           subgroup_id?: string | null
           name: string
           keterangan?: string | null
@@ -1015,6 +1059,7 @@ export type Database = {
         Update: {
           id?: string
           header_id?: string
+          section_id?: string | null
           subgroup_id?: string | null
           name?: string
           keterangan?: string | null
@@ -1026,6 +1071,13 @@ export type Database = {
             columns: ["header_id"]
             isOneToOne: false
             referencedRelation: "loa_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loa_menu_items_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "loa_sections"
             referencedColumns: ["id"]
           },
           {

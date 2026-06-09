@@ -44,14 +44,21 @@ export interface SubGroupDraft {
   keterangan: string
   items: MenuItemDraft[]
 }
+export interface SectionDraft {
+  key: string
+  name: string                // Komponen, mis. "Coffee Break 1", "Indonesian Buffet"
+  keterangan: string
+  items: MenuItemDraft[]       // item langsung di section (di luar sub-kategori)
+  subGroups: SubGroupDraft[]   // sub-kategori (Savoury/Beef/Soup/...)
+}
 export interface HeaderDraft {
   key: string
   name: string
   keterangan: string
   pax: number
   amount: number              // manual; price/pax = amount/pax (turunan tampilan)
-  subGroups: SubGroupDraft[]  // boleh kosong
-  items: MenuItemDraft[]      // item langsung di header (di luar sub-grup)
+  items: MenuItemDraft[]      // item langsung di header
+  sections: SectionDraft[]    // Komponen (boleh kosong)
 }
 export interface EventDraft {
   key: string

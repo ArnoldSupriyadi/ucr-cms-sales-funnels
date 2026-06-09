@@ -151,13 +151,16 @@ export function DocPreview() {
                         </td>
                       </tr>
                     ))}
-                    {h.subGroups.map((sg) => (
-                      <FragmentRows key={sg.key}>
+                    {h.sections.map((sec) => (
+                      <FragmentRows key={sec.key}>
                         <tr>
                           <td className={td}></td>
-                          <td className={td + ' font-semibold'} colSpan={4}>{sg.name}</td>
+                          <td className={td + ' font-semibold'} colSpan={4}>
+                            {sec.name}
+                            {sec.keterangan ? <span className="font-normal text-slate-500"> — {sec.keterangan}</span> : null}
+                          </td>
                         </tr>
-                        {sg.items.map((it) => (
+                        {sec.items.map((it) => (
                           <tr key={it.key}>
                             <td className={td}></td>
                             <td className={td} colSpan={4}>
@@ -165,6 +168,23 @@ export function DocPreview() {
                               {it.keterangan ? <span className="text-slate-500"> — {it.keterangan}</span> : null}
                             </td>
                           </tr>
+                        ))}
+                        {sec.subGroups.map((sg) => (
+                          <FragmentRows key={sg.key}>
+                            <tr>
+                              <td className={td}></td>
+                              <td className={td + ' pl-6 font-medium italic text-slate-700'} colSpan={4}>{sg.name}</td>
+                            </tr>
+                            {sg.items.map((it) => (
+                              <tr key={it.key}>
+                                <td className={td}></td>
+                                <td className={td + ' pl-6'} colSpan={4}>
+                                  • {it.name}
+                                  {it.keterangan ? <span className="text-slate-500"> — {it.keterangan}</span> : null}
+                                </td>
+                              </tr>
+                            ))}
+                          </FragmentRows>
                         ))}
                       </FragmentRows>
                     ))}
