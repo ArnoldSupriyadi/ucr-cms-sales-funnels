@@ -10,9 +10,9 @@ import type { ActionResult } from '@/types/domain'
 import type { LoaWizardState, SavedLoaDraft, EventDraft } from './types'
 
 /**
- * Simpan draft LoA: re-kalkulasi server (basis Σ amount Header, SC dari tipe order),
+ * Simpan draft LOA: re-kalkulasi server (basis Σ amount Header, SC dari tipe order),
  * upsert header `loa`, lalu delete-and-reinsert pohon events → headers → subgroups → menu_items.
- * 1 order = 1 LoA (UNIQUE booking_id).
+ * 1 order = 1 LOA (UNIQUE booking_id).
  */
 export async function saveLoaDraft(
   orderId: string,
@@ -39,7 +39,7 @@ export async function saveLoaDraft(
 
   const scPct = serviceChargePctForType(order.order_type)
   if (scPct <= 0) {
-    return { success: false, error: 'Tipe order belum diisi — pilih tipe order dulu sebelum simpan LoA' }
+    return { success: false, error: 'Tipe order belum diisi — pilih tipe order dulu sebelum simpan LOA' }
   }
 
   const calc = calculateLoa(headers.map((h) => h.amount), { ...state.pricing, scPct })
@@ -84,7 +84,7 @@ export async function saveLoaDraft(
     await supabase.from('loa_events').delete().eq('loa_id', loaId)
   } else {
     const { data, error } = await supabase.from('loa').insert(loaPayload).select('id').single()
-    if (error || !data) return { success: false, error: error?.message ?? 'Gagal simpan LoA' }
+    if (error || !data) return { success: false, error: error?.message ?? 'Gagal simpan LOA' }
     loaId = data.id
   }
 
@@ -164,7 +164,7 @@ export async function saveLoaDraft(
   return { success: true, data: { id: loaId, doc_no: docNo } }
 }
 
-/** Muat draft LoA tersimpan → pohon EventDraft[] + pricing. */
+/** Muat draft LOA tersimpan → pohon EventDraft[] + pricing. */
 export async function getLoaForEdit(orderId: string): Promise<SavedLoaDraft | null> {
   const supabase = await createClient()
   const { data: loa } = await supabase

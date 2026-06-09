@@ -59,7 +59,7 @@ function LoaFormBody({ catalog }: { catalog: MenuCatalog }) {
     <div className="space-y-5">
       {/* Topbar: order + toggle view */}
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-semibold text-slate-900">Form LoA</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Form LOA</h1>
         <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-600">
           {meta.orderNo}
         </span>

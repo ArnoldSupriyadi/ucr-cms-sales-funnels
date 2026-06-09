@@ -28,7 +28,7 @@ export default async function OrdersPage() {
   const orders = (data ?? []) as OrderWithLead[]
   const totalActive = orders.filter((o) => o.status !== 'Cancel').length
 
-  // Status LoA per order (booking_id) — untuk badge di tabel
+  // Status LOA per order (booking_id) — untuk badge di tabel
   const loaStatusByOrder = new Map<string, string>(
     (loaRows ?? []).map((r) => [r.booking_id as string, r.status as string])
   )
@@ -40,7 +40,7 @@ export default async function OrdersPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-800">LOA Orders</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            {totalActive} order aktif · {orders.length} total · pilih order untuk membuat LoA
+            {totalActive} order aktif · {orders.length} total · pilih order untuk membuat LOA
           </p>
         </div>
         {user.permissions['orders.create'] && (

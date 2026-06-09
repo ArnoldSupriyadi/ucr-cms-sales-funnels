@@ -1,4 +1,4 @@
-/** Identitas perusahaan untuk kop surat LoA (hardcode sesuai mockup). */
+/** Identitas perusahaan untuk kop surat LOA (hardcode sesuai mockup). */
 export const UMARA_COMPANY = {
   legalName: 'PT. UMARA CIPTA RASA',
   brandName: 'UMARA CATERING',

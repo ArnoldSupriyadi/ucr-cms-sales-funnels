@@ -346,7 +346,7 @@ export function OrderForm({ order, leads, defaultLeadId }: OrderFormProps) {
               <span className="font-medium text-slate-700">
                 {serviceChargePctForType(orderType)}%
               </span>{' '}
-              (mengikuti tipe order, otomatis di LoA)
+              (mengikuti tipe order, otomatis di LOA)
             </p>
           )}
 

@@ -7,11 +7,11 @@ import type { OrderWithLead } from '@/types/domain'
 
 interface LoaOrdersTableProps {
   orders: OrderWithLead[]
-  /** Map booking_id (order.id) → status LoA (loa_status_enum). Order tanpa entri = belum ada LoA. */
+  /** Map booking_id (order.id) → status LOA (loa_status_enum). Order tanpa entri = belum ada LOA. */
   loaStatusByOrder: Map<string, string>
 }
 
-// Label + warna badge per status LoA (loa_status_enum)
+// Label + warna badge per status LOA (loa_status_enum)
 const LOA_LABEL: Record<string, string> = {
   draft: 'Draft',
   pending_approval: 'Menunggu Approval',
@@ -30,8 +30,8 @@ const LOA_BADGE: Record<string, string> = {
 }
 
 /**
- * Tabel daftar order sebagai titik masuk pembuatan LoA.
- * Menggabungkan daftar order + status dokumen LoA dalam satu tampilan.
+ * Tabel daftar order sebagai titik masuk pembuatan LOA.
+ * Menggabungkan daftar order + status dokumen LOA dalam satu tampilan.
  */
 export function LoaOrdersTable({ orders, loaStatusByOrder }: LoaOrdersTableProps) {
   if (orders.length === 0) {
@@ -51,7 +51,7 @@ export function LoaOrdersTable({ orders, loaStatusByOrder }: LoaOrdersTableProps
             <th className="px-4 py-3">Klien</th>
             <th className="hidden px-4 py-3 md:table-cell">Tgl Event</th>
             <th className="px-4 py-3">Status</th>
-            <th className="hidden px-4 py-3 sm:table-cell">LoA</th>
+            <th className="hidden px-4 py-3 sm:table-cell">LOA</th>
             <th className="px-4 py-3 text-right">Aksi</th>
           </tr>
         </thead>
@@ -63,10 +63,10 @@ export function LoaOrdersTable({ orders, loaStatusByOrder }: LoaOrdersTableProps
               ? LOA_BADGE[loaStatus] ?? 'border-slate-200 bg-slate-50 text-slate-600'
               : 'border-slate-200 bg-slate-50 text-slate-500'
             const actionLabel = !loaStatus
-              ? 'Buat LoA'
+              ? 'Buat LOA'
               : loaStatus === 'draft'
-                ? 'Lanjut LoA'
-                : 'Lihat LoA'
+                ? 'Lanjut LOA'
+                : 'Lihat LOA'
             return (
             <tr key={order.id} className="transition-colors hover:bg-slate-50/60">
               <td className="px-4 py-3">

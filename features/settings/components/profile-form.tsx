@@ -95,7 +95,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                   placeholder="Sales Manager, Sales Executive, dll"
                 />
                 <p className="text-xs text-slate-400">
-                  Akan tampil di footer surat LoA
+                  Akan tampil di footer surat LOA
                 </p>
               </div>
               <div className="space-y-2">
@@ -107,7 +107,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                   placeholder="+62 812-xxxx-xxxx"
                 />
                 <p className="text-xs text-slate-400">
-                  Akan tampil di surat LoA
+                  Akan tampil di surat LOA
                 </p>
               </div>
             </div>

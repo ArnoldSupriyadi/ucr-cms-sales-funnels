@@ -82,7 +82,7 @@ export default async function LoaPage({
     },
   }
 
-  // Event awal: dari LoA tersimpan; bila belum ada, seed 1 event dari data order.
+  // Event awal: dari LOA tersimpan; bila belum ada, seed 1 event dari data order.
   const seededEvents: EventDraft[] = [
     {
       key: crypto.randomUUID(),
@@ -96,7 +96,7 @@ export default async function LoaPage({
   ]
   const initialEvents = saved?.events.length ? saved.events : seededEvents
 
-  // Service Charge selalu di-override dari tipe order (single source of truth), bukan dari LoA tersimpan.
+  // Service Charge selalu di-override dari tipe order (single source of truth), bukan dari LOA tersimpan.
   const scPct = serviceChargePctForType(order.order_type)
   const initialPricing: LoaPricingDraft = {
     ...(saved?.pricing ?? DEFAULT_PRICING),
@@ -111,7 +111,7 @@ export default async function LoaPage({
           <div className="flex items-center gap-2 text-sm text-amber-800">
             <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
             <span>
-              <b>Tipe Order belum diisi.</b> Service Charge tidak bisa ditentukan &amp; LoA tidak
+              <b>Tipe Order belum diisi.</b> Service Charge tidak bisa ditentukan &amp; LOA tidak
               bisa disimpan sampai tipe order dipilih.
             </span>
           </div>

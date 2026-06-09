@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { MenuCatalog } from '@/features/loa/types'
 import { shapeMenuCatalog } from '@/lib/loa/catalog-shape'
 
-/** Ambil seluruh katalog menu untuk form LoA dan bentuk jadi MenuCatalog. */
+/** Ambil seluruh katalog menu untuk form LOA dan bentuk jadi MenuCatalog. */
 export async function loadMenuCatalog(): Promise<MenuCatalog> {
   const supabase = await createClient()
 

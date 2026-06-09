@@ -22,7 +22,7 @@ export function StepReview() {
     setSaving(true)
     const res = await saveLoaDraft(orderId, state)
     if (res.success) {
-      toast.success('Draft LoA tersimpan', { description: res.data.doc_no })
+      toast.success('Draft LOA tersimpan', { description: res.data.doc_no })
       router.refresh()
     } else {
       toast.error('Gagal menyimpan', { description: res.error })

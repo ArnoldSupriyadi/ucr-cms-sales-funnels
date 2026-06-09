@@ -85,7 +85,7 @@ export interface LoaWizardState {
   pricing: LoaPricingDraft
 }
 
-/** Subset draft LoA yang dipersist & dimuat ulang dari DB. */
+/** Subset draft LOA yang dipersist & dimuat ulang dari DB. */
 export interface SavedLoaDraft {
   events: EventDraft[]
   pricing: LoaPricingDraft

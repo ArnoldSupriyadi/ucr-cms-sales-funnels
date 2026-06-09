@@ -45,7 +45,7 @@ export function StepDetail() {
           <ReadField label="HP" value={client.picPhone} />
         </div>
 
-        {/* Nama Kegiatan (LoA-level) */}
+        {/* Nama Kegiatan (LOA-level) */}
         <GroupLabel>Kegiatan <Src>input sales</Src></GroupLabel>
         <EditField label="Nama Kegiatan" value={detail.eventName}
           onChange={(v) => dispatch({ type: 'SET_DETAIL_FIELD', field: 'eventName', value: v })} />

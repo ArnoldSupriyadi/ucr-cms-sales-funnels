@@ -41,7 +41,7 @@ export default async function IbPage({
         <CardContent>
           <p className="text-sm text-slate-500">
             Fitur IB akan dibangun pada Bulan 4. Tersedia hanya untuk Cost Controller
-            setelah LoA berstatus Final.
+            setelah LOA berstatus Final.
           </p>
         </CardContent>
       </Card>
