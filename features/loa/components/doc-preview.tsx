@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useLoaForm } from '../loa-form-context'
 import { UMARA_COMPANY } from '../company'
 import { hariID, tanggalID } from '@/lib/utils/date-id'
-import { formatRupiah } from '@/lib/utils/format'
+import { formatRupiah, formatDateRange } from '@/lib/utils/format'
 import styles from './doc-preview.module.css'
 
 export function DocPreview() {
@@ -72,6 +72,8 @@ export function DocPreview() {
             <span className={styles.k}>PIC</span><span>{meta.client.picName}</span>
             <span className={styles.k}>HP</span><span>{meta.client.picPhone}</span>
             <span className={styles.k}>Nama Kegiatan</span><span>{detail.eventName || '—'}</span>
+            <span className={styles.k}>Tanggal Kegiatan</span>
+            <span>{meta.eventDateStart ? formatDateRange(meta.eventDateStart, meta.eventDateEnd) : '—'}</span>
           </div>
           <div className={styles.dl} style={{ alignContent: 'start' }}>
             <span className={styles.k}>Properti</span><span>{UMARA_COMPANY.brandName}</span>

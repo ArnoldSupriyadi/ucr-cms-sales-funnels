@@ -110,6 +110,8 @@ export const DEFAULT_PRICING: LoaPricingDraft = {
 // ---- Data read-only dari server ----
 export interface InitialLoaData {
   orderNo: string
+  eventDateStart: string        // dari order.event_date
+  eventDateEnd: string | null   // dari order.event_date_end (null = 1 hari)
   client: {
     name: string
     segmen: string

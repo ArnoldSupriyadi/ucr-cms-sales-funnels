@@ -64,6 +64,8 @@ export default async function LoaPage({
 
   const initial: InitialLoaData = {
     orderNo: order.order_no,
+    eventDateStart: order.event_date ?? '',
+    eventDateEnd: order.event_date_end ?? null,
     client: {
       name: lead?.company_name ?? '—',
       segmen: segmen || '—',
@@ -82,18 +84,35 @@ export default async function LoaPage({
     },
   }
 
-  // Event awal: dari LOA tersimpan; bila belum ada, seed 1 event dari data order.
-  const seededEvents: EventDraft[] = [
-    {
-      key: crypto.randomUUID(),
-      eventDate: order.event_date ?? '',
-      servingTime: order.event_time ?? '',
-      venue: order.venue ?? '',
-      setupLocation: '',
-      pax: order.pax ?? 0,
-      headers: [],
-    },
-  ]
+  // Daftar tanggal dalam rentang order (mulai..selesai), maks 60 hari (guard).
+  // UTC-safe (hindari geser 1 hari karena timezone lokal saat parse/format).
+  function daysInRange(start: string, end: string | null): string[] {
+    if (!start) return ['']
+    if (!end || end === start) return [start]
+    const [sy, sm, sd] = start.split('-').map(Number)
+    const [ey, em, ed] = end.split('-').map(Number)
+    let cur = Date.UTC(sy, sm - 1, sd)
+    const last = Date.UTC(ey, em - 1, ed)
+    if (Number.isNaN(cur) || Number.isNaN(last) || last < cur) return [start]
+    const out: string[] = []
+    for (let i = 0; cur <= last && i < 60; i++) {
+      const d = new Date(cur)
+      out.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`)
+      cur += 86_400_000
+    }
+    return out
+  }
+
+  // Event awal: dari LOA tersimpan; bila belum ada, seed 1 event PER HARI dalam rentang order.
+  const seededEvents: EventDraft[] = daysInRange(order.event_date ?? '', order.event_date_end ?? null).map((date) => ({
+    key: crypto.randomUUID(),
+    eventDate: date,
+    servingTime: order.event_time ?? '',
+    venue: order.venue ?? '',
+    setupLocation: '',
+    pax: order.pax ?? 0,
+    headers: [],
+  }))
   const initialEvents = saved?.events.length ? saved.events : seededEvents
 
   // Service Charge selalu di-override dari tipe order (single source of truth), bukan dari LOA tersimpan.

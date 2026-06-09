@@ -17,7 +17,7 @@ interface LoaFormContextValue {
   dispatch: Dispatch<LoaFormAction>
   calc: LoaCalcResult
   orderId: string
-  meta: { orderNo: string; client: InitialLoaData['client'] }
+  meta: { orderNo: string; eventDateStart: string; eventDateEnd: string | null; client: InitialLoaData['client'] }
   salesUsers: SalesUser[]
 }
 
@@ -55,10 +55,15 @@ export function LoaFormProvider({
       dispatch,
       calc,
       orderId,
-      meta: { orderNo: initial.orderNo, client: initial.client },
+      meta: {
+        orderNo: initial.orderNo,
+        eventDateStart: initial.eventDateStart,
+        eventDateEnd: initial.eventDateEnd,
+        client: initial.client,
+      },
       salesUsers,
     }),
-    [state, calc, orderId, initial.orderNo, initial.client, salesUsers],
+    [state, calc, orderId, initial.orderNo, initial.eventDateStart, initial.eventDateEnd, initial.client, salesUsers],
   )
 
   return <LoaFormContext.Provider value={value}>{children}</LoaFormContext.Provider>

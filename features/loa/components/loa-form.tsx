@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { formatDateRange } from '@/lib/utils/format'
 import { LoaFormProvider, useLoaForm } from '../loa-form-context'
 import type {
   InitialLoaData,
@@ -63,6 +64,11 @@ function LoaFormBody({ catalog }: { catalog: MenuCatalog }) {
         <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-600">
           {meta.orderNo}
         </span>
+        {meta.eventDateStart && (
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+            {formatDateRange(meta.eventDateStart, meta.eventDateEnd)}
+          </span>
+        )}
         <div className="ml-auto inline-flex overflow-hidden rounded-lg border">
           <button
             type="button"
