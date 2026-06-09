@@ -53,9 +53,9 @@ export function StepDetail() {
         {/* Event (multi-tanggal) */}
         <div className="flex items-center justify-between pt-1">
           <GroupLabel>Waktu &amp; Tempat <Src>per event</Src></GroupLabel>
-          <Button type="button" size="sm" variant="outline" className="gap-1.5"
+          <Button type="button" size="sm" className="gap-1.5 bg-amber-400 font-semibold text-amber-950 shadow-sm hover:bg-amber-500"
             onClick={() => dispatch({ type: 'ADD_EVENT' })}>
-            <Plus className="h-3.5 w-3.5" /> Tambah Event
+            <Plus className="h-4 w-4" /> Tambah Event
           </Button>
         </div>
 
