@@ -4,7 +4,6 @@ import type {
   LoaPricingDraft,
   EventDraft,
   HeaderDraft,
-  SectionDraft,
   SubGroupDraft,
   MenuItemDraft,
 } from './types'
@@ -15,9 +14,8 @@ const uid = () => crypto.randomUUID()
 // ---- Factory node ----
 export const newMenuItem = (): MenuItemDraft => ({ key: uid(), name: '', keterangan: '' })
 export const newSubGroup = (): SubGroupDraft => ({ key: uid(), name: '', keterangan: '', items: [] })
-export const newSection = (): SectionDraft => ({ key: uid(), name: '', keterangan: '', items: [], subGroups: [] })
 export const newHeader = (): HeaderDraft => ({
-  key: uid(), name: '', keterangan: '', pax: 0, amount: 0, items: [], sections: [],
+  key: uid(), name: '', keterangan: '', pax: 0, amount: 0, subGroups: [],
 })
 export const newEvent = (eventDate = ''): EventDraft => ({
   key: uid(), eventDate, servingTime: '', venue: '', setupLocation: '', pax: 0, headers: [],
@@ -27,16 +25,10 @@ export const newEvent = (eventDate = ''): EventDraft => ({
 export const newPrefilledHeader = (h: HeaderDraft): HeaderDraft => ({
   ...h,
   key: uid(),
-  items: h.items.map((it) => ({ ...it, key: uid() })),
-  sections: h.sections.map((s) => ({
-    ...s,
+  subGroups: h.subGroups.map((sg) => ({
+    ...sg,
     key: uid(),
-    items: s.items.map((it) => ({ ...it, key: uid() })),
-    subGroups: s.subGroups.map((sg) => ({
-      ...sg,
-      key: uid(),
-      items: sg.items.map((it) => ({ ...it, key: uid() })),
-    })),
+    items: sg.items.map((it) => ({ ...it, key: uid() })),
   })),
 })
 
@@ -63,18 +55,14 @@ export type LoaFormAction =
   | { type: 'ADD_PREFILLED_HEADER'; eventKey: string; header: HeaderDraft }
   | { type: 'REMOVE_HEADER'; eventKey: string; headerKey: string }
   | { type: 'SET_HEADER_FIELD'; eventKey: string; headerKey: string; field: 'name' | 'keterangan' | 'pax' | 'amount'; value: string | number }
-  // section (komponen)
-  | { type: 'ADD_SECTION'; eventKey: string; headerKey: string }
-  | { type: 'REMOVE_SECTION'; eventKey: string; headerKey: string; sectionKey: string }
-  | { type: 'SET_SECTION_FIELD'; eventKey: string; headerKey: string; sectionKey: string; field: 'name' | 'keterangan'; value: string }
-  // sub-grup (sub-kategori) — selalu di dalam section
-  | { type: 'ADD_SUBGROUP'; eventKey: string; headerKey: string; sectionKey: string }
-  | { type: 'REMOVE_SUBGROUP'; eventKey: string; headerKey: string; sectionKey: string; subGroupKey: string }
-  | { type: 'SET_SUBGROUP_FIELD'; eventKey: string; headerKey: string; sectionKey: string; subGroupKey: string; field: 'name' | 'keterangan'; value: string }
-  // item — lokasi: (sectionKey null & subGroupKey null = header) | (sectionKey set & subGroupKey null = section) | (keduanya set = subgroup)
-  | { type: 'ADD_ITEM'; eventKey: string; headerKey: string; sectionKey: string | null; subGroupKey: string | null }
-  | { type: 'REMOVE_ITEM'; eventKey: string; headerKey: string; sectionKey: string | null; subGroupKey: string | null; itemKey: string }
-  | { type: 'SET_ITEM_FIELD'; eventKey: string; headerKey: string; sectionKey: string | null; subGroupKey: string | null; itemKey: string; field: 'name' | 'keterangan'; value: string }
+  // jenis menu (sub-grup) — langsung di bawah header
+  | { type: 'ADD_SUBGROUP'; eventKey: string; headerKey: string }
+  | { type: 'REMOVE_SUBGROUP'; eventKey: string; headerKey: string; subGroupKey: string }
+  | { type: 'SET_SUBGROUP_FIELD'; eventKey: string; headerKey: string; subGroupKey: string; field: 'name' | 'keterangan'; value: string }
+  // item — selalu di dalam sebuah Jenis Menu
+  | { type: 'ADD_ITEM'; eventKey: string; headerKey: string; subGroupKey: string }
+  | { type: 'REMOVE_ITEM'; eventKey: string; headerKey: string; subGroupKey: string; itemKey: string }
+  | { type: 'SET_ITEM_FIELD'; eventKey: string; headerKey: string; subGroupKey: string; itemKey: string; field: 'name' | 'keterangan'; value: string }
   // pricing
   | { type: 'SET_PRICING_FIELD'; field: keyof LoaPricingDraft; value: string | number | boolean }
   | { type: 'TOGGLE_DISCOUNT'; on: boolean }
@@ -86,17 +74,8 @@ function mapEvent(state: LoaWizardState, eventKey: string, fn: (e: EventDraft) =
 function mapHeader(event: EventDraft, headerKey: string, fn: (h: HeaderDraft) => HeaderDraft): EventDraft {
   return { ...event, headers: event.headers.map((h) => (h.key === headerKey ? fn(h) : h)) }
 }
-function mapSection(header: HeaderDraft, sectionKey: string, fn: (s: SectionDraft) => SectionDraft): HeaderDraft {
-  return { ...header, sections: header.sections.map((s) => (s.key === sectionKey ? fn(s) : s)) }
-}
-type ItemsFn = (items: MenuItemDraft[]) => MenuItemDraft[]
-/** Terapkan fn ke daftar item pada lokasi (sectionKey/subGroupKey) di dalam header. */
-function upsertItems(header: HeaderDraft, sectionKey: string | null, subGroupKey: string | null, fn: ItemsFn): HeaderDraft {
-  if (sectionKey === null) return { ...header, items: fn(header.items) }
-  return mapSection(header, sectionKey, (s) => {
-    if (subGroupKey === null) return { ...s, items: fn(s.items) }
-    return { ...s, subGroups: s.subGroups.map((sg) => (sg.key === subGroupKey ? { ...sg, items: fn(sg.items) } : sg)) }
-  })
+function mapSubGroup(header: HeaderDraft, subGroupKey: string, fn: (sg: SubGroupDraft) => SubGroupDraft): HeaderDraft {
+  return { ...header, subGroups: header.subGroups.map((sg) => (sg.key === subGroupKey ? fn(sg) : sg)) }
 }
 
 export function loaFormReducer(state: LoaWizardState, action: LoaFormAction): LoaWizardState {
@@ -120,39 +99,27 @@ export function loaFormReducer(state: LoaWizardState, action: LoaFormAction): Lo
     case 'SET_HEADER_FIELD':
       return mapEvent(state, action.eventKey, (e) => mapHeader(e, action.headerKey, (h) => ({ ...h, [action.field]: action.value })))
 
-    case 'ADD_SECTION':
-      return mapEvent(state, action.eventKey, (e) => mapHeader(e, action.headerKey, (h) => ({ ...h, sections: [...h.sections, newSection()] })))
-    case 'REMOVE_SECTION':
-      return mapEvent(state, action.eventKey, (e) => mapHeader(e, action.headerKey, (h) => ({ ...h, sections: h.sections.filter((s) => s.key !== action.sectionKey) })))
-    case 'SET_SECTION_FIELD':
-      return mapEvent(state, action.eventKey, (e) =>
-        mapHeader(e, action.headerKey, (h) => mapSection(h, action.sectionKey, (s) => ({ ...s, [action.field]: action.value }))))
-
     case 'ADD_SUBGROUP':
-      return mapEvent(state, action.eventKey, (e) =>
-        mapHeader(e, action.headerKey, (h) => mapSection(h, action.sectionKey, (s) => ({ ...s, subGroups: [...s.subGroups, newSubGroup()] }))))
+      return mapEvent(state, action.eventKey, (e) => mapHeader(e, action.headerKey, (h) => ({ ...h, subGroups: [...h.subGroups, newSubGroup()] })))
     case 'REMOVE_SUBGROUP':
-      return mapEvent(state, action.eventKey, (e) =>
-        mapHeader(e, action.headerKey, (h) => mapSection(h, action.sectionKey, (s) => ({ ...s, subGroups: s.subGroups.filter((sg) => sg.key !== action.subGroupKey) }))))
+      return mapEvent(state, action.eventKey, (e) => mapHeader(e, action.headerKey, (h) => ({ ...h, subGroups: h.subGroups.filter((sg) => sg.key !== action.subGroupKey) })))
     case 'SET_SUBGROUP_FIELD':
       return mapEvent(state, action.eventKey, (e) =>
-        mapHeader(e, action.headerKey, (h) =>
-          mapSection(h, action.sectionKey, (s) => ({
-            ...s,
-            subGroups: s.subGroups.map((sg) => (sg.key === action.subGroupKey ? { ...sg, [action.field]: action.value } : sg)),
-          }))))
+        mapHeader(e, action.headerKey, (h) => mapSubGroup(h, action.subGroupKey, (sg) => ({ ...sg, [action.field]: action.value }))))
 
     case 'ADD_ITEM':
       return mapEvent(state, action.eventKey, (e) =>
-        mapHeader(e, action.headerKey, (h) => upsertItems(h, action.sectionKey, action.subGroupKey, (items) => [...items, newMenuItem()])))
+        mapHeader(e, action.headerKey, (h) => mapSubGroup(h, action.subGroupKey, (sg) => ({ ...sg, items: [...sg.items, newMenuItem()] }))))
     case 'REMOVE_ITEM':
       return mapEvent(state, action.eventKey, (e) =>
-        mapHeader(e, action.headerKey, (h) => upsertItems(h, action.sectionKey, action.subGroupKey, (items) => items.filter((it) => it.key !== action.itemKey))))
+        mapHeader(e, action.headerKey, (h) => mapSubGroup(h, action.subGroupKey, (sg) => ({ ...sg, items: sg.items.filter((it) => it.key !== action.itemKey) }))))
     case 'SET_ITEM_FIELD':
       return mapEvent(state, action.eventKey, (e) =>
         mapHeader(e, action.headerKey, (h) =>
-          upsertItems(h, action.sectionKey, action.subGroupKey, (items) =>
-            items.map((it) => (it.key === action.itemKey ? { ...it, [action.field]: action.value } : it)))))
+          mapSubGroup(h, action.subGroupKey, (sg) => ({
+            ...sg,
+            items: sg.items.map((it) => (it.key === action.itemKey ? { ...it, [action.field]: action.value } : it)),
+          }))))
 
     case 'SET_PRICING_FIELD':
       return { ...state, pricing: { ...state.pricing, [action.field]: action.value } }

@@ -1,4 +1,4 @@
-import type { MenuCatalog, HeaderDraft, SectionDraft, SubGroupDraft, MenuItemDraft } from '@/features/loa/types'
+import type { MenuCatalog, HeaderDraft, SubGroupDraft, MenuItemDraft } from '@/features/loa/types'
 
 const uid = () => crypto.randomUUID()
 const SAMPLE = 3 // jumlah item contoh per sub-kategori saat prefill
@@ -67,28 +67,24 @@ export function categoryToSubGroup(catalog: MenuCatalog, categoryName: string): 
   return { key: uid(), name: categoryName, keterangan: '', items }
 }
 
-/** Paket → HeaderDraft 3-level: section per komponen (qty>1 bernomor), sub-kategori daun, SAMPLE item contoh. */
+/** Paket → HeaderDraft: Jenis Menu (kategori daun unik dari semua komponen) + SAMPLE item contoh. */
 export function packageToHeader(catalog: MenuCatalog, packageId: string): HeaderDraft | null {
   const pkg = catalog.packages.find((p) => p.id === packageId)
   if (!pkg) return null
-  const sections: SectionDraft[] = []
+  const seen = new Set<string>()
+  const subGroups: SubGroupDraft[] = []
   for (const comp of pkg.components) {
     const cats = catalog.categoriesByComponentType[comp.componentType] ?? []
-    for (let o = 1; o <= comp.qty; o++) {
-      const subGroups: SubGroupDraft[] = cats.map((c) => ({
+    for (const c of cats) {
+      if (seen.has(c.nama)) continue
+      seen.add(c.nama)
+      subGroups.push({
         key: uid(),
         name: c.nama,
         keterangan: '',
         items: c.items.slice(0, SAMPLE).map((it) => ({ key: uid(), name: it.nama, keterangan: '' })),
-      }))
-      sections.push({
-        key: uid(),
-        name: comp.qty > 1 ? `${comp.nama} ${o}` : comp.nama,
-        keterangan: '',
-        items: [],
-        subGroups,
       })
     }
   }
-  return { key: uid(), name: pkg.namaPaket, keterangan: '', pax: 0, amount: 0, items: [], sections }
+  return { key: uid(), name: pkg.namaPaket, keterangan: '', pax: 0, amount: 0, subGroups }
 }

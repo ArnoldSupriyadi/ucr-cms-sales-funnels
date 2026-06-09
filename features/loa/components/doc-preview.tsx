@@ -144,49 +144,23 @@ export function DocPreview() {
                       <td className={td + ' text-center'}>{h.pax || '—'}</td>
                       <td className={td + ' text-right font-semibold'}>{formatRupiah(lineTotal)}</td>
                     </tr>
-                    {h.items.map((it) => (
-                      <tr key={it.key}>
-                        <td className={td}></td>
-                        <td className={td} colSpan={4}>
-                          • {it.name}
-                          {it.keterangan ? <span className="text-slate-500"> — {it.keterangan}</span> : null}
-                        </td>
-                      </tr>
-                    ))}
-                    {h.sections.map((sec) => (
-                      <FragmentRows key={sec.key}>
+                    {h.subGroups.map((sg) => (
+                      <FragmentRows key={sg.key}>
                         <tr>
                           <td className={td}></td>
                           <td className={td + ' font-semibold'} colSpan={4}>
-                            {sec.name}
-                            {sec.keterangan ? <span className="font-normal text-slate-500"> — {sec.keterangan}</span> : null}
+                            {sg.name}
+                            {sg.keterangan ? <span className="font-normal text-slate-500"> — {sg.keterangan}</span> : null}
                           </td>
                         </tr>
-                        {sec.items.map((it) => (
+                        {sg.items.map((it) => (
                           <tr key={it.key}>
                             <td className={td}></td>
-                            <td className={td} colSpan={4}>
+                            <td className={td + ' pl-6'} colSpan={4}>
                               • {it.name}
                               {it.keterangan ? <span className="text-slate-500"> — {it.keterangan}</span> : null}
                             </td>
                           </tr>
-                        ))}
-                        {sec.subGroups.map((sg) => (
-                          <FragmentRows key={sg.key}>
-                            <tr>
-                              <td className={td}></td>
-                              <td className={td + ' pl-6 font-medium italic text-slate-700'} colSpan={4}>{sg.name}</td>
-                            </tr>
-                            {sg.items.map((it) => (
-                              <tr key={it.key}>
-                                <td className={td}></td>
-                                <td className={td + ' pl-6'} colSpan={4}>
-                                  • {it.name}
-                                  {it.keterangan ? <span className="text-slate-500"> — {it.keterangan}</span> : null}
-                                </td>
-                              </tr>
-                            ))}
-                          </FragmentRows>
                         ))}
                       </FragmentRows>
                     ))}

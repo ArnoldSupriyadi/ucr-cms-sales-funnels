@@ -62,15 +62,13 @@ describe('searchItemsInCategory', () => {
   })
 })
 
-describe('packageToHeader 3-level', () => {
-  it('komponen qty 2 → 2 section bernomor; sub-kategori; 3 item contoh', () => {
+describe('packageToHeader (Header → Jenis Menu)', () => {
+  it('sub-kategori daun unik dari semua komponen + 3 item contoh', () => {
     const h = packageToHeader(catalog, 'pkg-1')!
     expect(h.name).toBe('Full Day Meeting')
-    expect(h.sections.map((s) => s.name)).toEqual(['Coffee Break 1', 'Coffee Break 2', 'Buffet'])
-    const cb1 = h.sections[0]
-    expect(cb1.subGroups[0].name).toBe('Savoury')
-    expect(cb1.subGroups[0].items).toHaveLength(3)
-    expect(cb1.subGroups[0].items.map((i) => i.name)).toEqual(['Risoles', 'Lemper', 'Pastel'])
+    expect(h.subGroups.map((g) => g.name)).toEqual(['Savoury', 'Beef'])
+    expect(h.subGroups[0].items).toHaveLength(3)
+    expect(h.subGroups[0].items.map((i) => i.name)).toEqual(['Risoles', 'Lemper', 'Pastel'])
   })
   it('paket tak ada → null', () => {
     expect(packageToHeader(catalog, 'zz')).toBeNull()

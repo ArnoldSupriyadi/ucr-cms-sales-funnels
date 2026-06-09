@@ -10,47 +10,39 @@ function withHeader() {
   return { s, ek, hk }
 }
 
-describe('loaFormReducer 3-level', () => {
-  it('ADD_EVENT + ADD_HEADER', () => {
+describe('loaFormReducer (Header → Jenis Menu → Item)', () => {
+  it('ADD_HEADER → subGroups kosong', () => {
     const { s } = withHeader()
     expect(s.events[0].headers).toHaveLength(1)
-    expect(s.events[0].headers[0].sections).toEqual([])
+    expect(s.events[0].headers[0].subGroups).toEqual([])
   })
 
-  it('ADD_SECTION + ADD_SUBGROUP + ADD_ITEM ke subgroup', () => {
+  it('ADD_SUBGROUP + ADD_ITEM ke Jenis Menu', () => {
     let { s, ek, hk } = withHeader()
-    s = loaFormReducer(s, { type: 'ADD_SECTION', eventKey: ek, headerKey: hk })
-    const sk = s.events[0].headers[0].sections[0].key
-    s = loaFormReducer(s, { type: 'ADD_SUBGROUP', eventKey: ek, headerKey: hk, sectionKey: sk })
-    const gk = s.events[0].headers[0].sections[0].subGroups[0].key
-    s = loaFormReducer(s, { type: 'ADD_ITEM', eventKey: ek, headerKey: hk, sectionKey: sk, subGroupKey: gk })
-    expect(s.events[0].headers[0].sections[0].subGroups[0].items).toHaveLength(1)
+    s = loaFormReducer(s, { type: 'ADD_SUBGROUP', eventKey: ek, headerKey: hk })
+    const gk = s.events[0].headers[0].subGroups[0].key
+    s = loaFormReducer(s, { type: 'ADD_ITEM', eventKey: ek, headerKey: hk, subGroupKey: gk })
+    expect(s.events[0].headers[0].subGroups[0].items).toHaveLength(1)
   })
 
-  it('ADD_ITEM langsung di header (section null, sub null)', () => {
+  it('SET_SUBGROUP_FIELD name', () => {
     let { s, ek, hk } = withHeader()
-    s = loaFormReducer(s, { type: 'ADD_ITEM', eventKey: ek, headerKey: hk, sectionKey: null, subGroupKey: null })
-    expect(s.events[0].headers[0].items).toHaveLength(1)
-  })
-
-  it('ADD_ITEM langsung di section (subgroup null)', () => {
-    let { s, ek, hk } = withHeader()
-    s = loaFormReducer(s, { type: 'ADD_SECTION', eventKey: ek, headerKey: hk })
-    const sk = s.events[0].headers[0].sections[0].key
-    s = loaFormReducer(s, { type: 'ADD_ITEM', eventKey: ek, headerKey: hk, sectionKey: sk, subGroupKey: null })
-    expect(s.events[0].headers[0].sections[0].items).toHaveLength(1)
+    s = loaFormReducer(s, { type: 'ADD_SUBGROUP', eventKey: ek, headerKey: hk })
+    const gk = s.events[0].headers[0].subGroups[0].key
+    s = loaFormReducer(s, { type: 'SET_SUBGROUP_FIELD', eventKey: ek, headerKey: hk, subGroupKey: gk, field: 'name', value: 'Beef' })
+    expect(s.events[0].headers[0].subGroups[0].name).toBe('Beef')
   })
 
   it('ADD_PREFILLED_HEADER menambah header siap pakai (re-key)', () => {
     let s = loaFormReducer(initialState([]), { type: 'ADD_EVENT' })
     const ek = s.events[0].key
     const header: HeaderDraft = {
-      key: 'x', name: 'Full Day', keterangan: '', pax: 0, amount: 0, items: [],
-      sections: [{ key: 's', name: 'Coffee Break 1', keterangan: '', items: [], subGroups: [] }],
+      key: 'x', name: 'Full Day', keterangan: '', pax: 0, amount: 0,
+      subGroups: [{ key: 'g', name: 'Beef', keterangan: '', items: [{ key: 'i', name: 'Rendang', keterangan: '' }] }],
     }
     s = loaFormReducer(s, { type: 'ADD_PREFILLED_HEADER', eventKey: ek, header })
     expect(s.events[0].headers[0].name).toBe('Full Day')
-    expect(s.events[0].headers[0].sections[0].name).toBe('Coffee Break 1')
+    expect(s.events[0].headers[0].subGroups[0].name).toBe('Beef')
     expect(s.events[0].headers[0].key).not.toBe('x') // re-key
   })
 
