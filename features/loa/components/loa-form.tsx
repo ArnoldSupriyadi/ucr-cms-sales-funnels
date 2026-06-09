@@ -73,14 +73,14 @@ function LoaFormBody({ catalog }: { catalog: MenuCatalog }) {
           <button
             type="button"
             onClick={() => setView('form')}
-            className={`px-3.5 py-1.5 text-[13px] font-semibold ${view === 'form' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500'}`}
+            className={`px-3.5 py-1.5 text-[13px] font-semibold ${view === 'form' ? 'bg-gradient-to-r from-amber-400 to-yellow-600 text-amber-950' : 'bg-white text-slate-500'}`}
           >
             Form Input
           </button>
           <button
             type="button"
             onClick={() => setView('doc')}
-            className={`px-3.5 py-1.5 text-[13px] font-semibold ${view === 'doc' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500'}`}
+            className={`px-3.5 py-1.5 text-[13px] font-semibold ${view === 'doc' ? 'bg-gradient-to-r from-amber-400 to-yellow-600 text-amber-950' : 'bg-white text-slate-500'}`}
           >
             Preview Dokumen
           </button>
@@ -106,6 +106,7 @@ function LoaFormBody({ catalog }: { catalog: MenuCatalog }) {
                 <Button
                   onClick={() => go(1)}
                   disabled={step === 1 && state.events.every((e) => e.headers.length === 0)}
+                  className="bg-gradient-to-r from-amber-400 to-yellow-600 font-semibold text-amber-950 shadow-md hover:from-amber-500 hover:to-yellow-700 hover:text-amber-950"
                 >
                   Lanjut →
                 </Button>
