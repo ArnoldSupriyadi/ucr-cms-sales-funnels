@@ -22,10 +22,7 @@ export function PricePanel() {
           </div>
         )}
         <Row label={`Service Charge (${pricing.scPct}%)`} value={formatRupiah(calc.serviceChargeAmt)} muted />
-        <div className="my-1.5 flex justify-between rounded-md bg-green-50 px-2 py-1.5 font-semibold text-green-700">
-          <span>Net Revenue (Sub Total 2)</span>
-          <span>{formatRupiah(calc.subTotal2)}</span>
-        </div>
+        <Row label="Sub Total 2" value={formatRupiah(calc.subTotal2)} muted />
         <Row label="PB1 (10%)" value={formatRupiah(calc.pb1Amt)} muted />
         <Row
           label={`Handling (${pricing.handlingType === 'percent' ? `${pricing.handlingValue}%` : 'flat'})`}
@@ -38,7 +35,7 @@ export function PricePanel() {
           <span>{formatRupiah(calc.grandTotal)}</span>
         </div>
         <p className="mt-2.5 text-[11px] text-slate-400">
-          Diskon memotong dari Sub Total 1; Net Revenue (Sub Total 2) = basis setelah diskon + service charge.
+          Diskon memotong dari Sub Total 1; Sub Total 2 = setelah diskon + service charge (basis PB1 &amp; Handling).
         </p>
       </CardContent>
     </Card>

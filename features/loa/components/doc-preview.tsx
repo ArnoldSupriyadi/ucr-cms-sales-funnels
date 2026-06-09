@@ -201,7 +201,7 @@ export function DocPreview() {
               <TotalRow td={td} label="Diskon" value={'− ' + formatRupiah(calc.discountAmt)} />
             )}
             <TotalRow td={td} label={`Service Charge (${pricing.scPct}%)`} value={formatRupiah(calc.serviceChargeAmt)} />
-            <TotalRow td={td} label="Sub Total 2 (Net Revenue)" value={formatRupiah(calc.subTotal2)} />
+            <TotalRow td={td} label="Sub Total 2" value={formatRupiah(calc.subTotal2)} />
             <TotalRow td={td} label="PB1 (10%)" value={formatRupiah(calc.pb1Amt)} />
             <TotalRow td={td} label={`Handling (${pricing.handlingType === 'percent' ? `${pricing.handlingValue}%` : 'flat'})`} value={formatRupiah(calc.handlingFeeAmt)} />
             <tr className="bg-slate-100 font-bold">
