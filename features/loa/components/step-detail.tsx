@@ -64,9 +64,9 @@ export function StepDetail() {
         )}
 
         {events.map((ev, idx) => (
-          <div key={ev.key} className="space-y-3 rounded-lg border px-4 py-3.5">
+          <div key={ev.key} className="space-y-3 rounded-lg border border-sky-200 border-l-4 border-l-sky-400 bg-sky-50/40 px-4 py-3.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-indigo-600">Event {idx + 1}</span>
+              <span className="rounded-md bg-sky-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-sky-700">Event {idx + 1}</span>
               <button type="button"
                 className="inline-flex items-center gap-1 text-[13px] text-slate-400 hover:text-red-600"
                 onClick={() => dispatch({ type: 'REMOVE_EVENT', eventKey: ev.key })}>
