@@ -1,6 +1,5 @@
 'use client'
 
-import { useMemo } from 'react'
 import { Trash2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,26 +7,15 @@ import { Label } from '@/components/ui/label'
 import { formatRupiah } from '@/lib/utils/format'
 import { useLoaForm } from '../loa-form-context'
 import { ItemCombobox } from './item-combobox'
-import { PackageCombobox } from './package-combobox'
-import { packageToHeader } from '@/lib/loa/catalog-suggest'
-import type { EventDraft, MenuCatalog, HeaderDraft, SubGroupDraft, CatalogPackage } from '../types'
+import type { EventDraft, MenuCatalog, HeaderDraft, SubGroupDraft } from '../types'
 
 export function MenuTreeEditor({ event, catalog }: { event: EventDraft; catalog: MenuCatalog }) {
   const { dispatch } = useLoaForm()
-  const packagesByKategori = useMemo<[string, CatalogPackage[]][]>(() => {
-    const m = new Map<string, CatalogPackage[]>()
-    for (const p of catalog.packages) {
-      const arr = m.get(p.kategori) ?? []
-      arr.push(p)
-      m.set(p.kategori, arr)
-    }
-    return [...m.entries()]
-  }, [catalog])
 
   return (
     <div className="space-y-3">
       {event.headers.map((h) => (
-        <HeaderCard key={h.key} eventKey={event.key} header={h} catalog={catalog} packagesByKategori={packagesByKategori} />
+        <HeaderCard key={h.key} eventKey={event.key} header={h} catalog={catalog} />
       ))}
       <Button
         type="button"
@@ -42,12 +30,11 @@ export function MenuTreeEditor({ event, catalog }: { event: EventDraft; catalog:
 }
 
 function HeaderCard({
-  eventKey, header, catalog, packagesByKategori,
+  eventKey, header, catalog,
 }: {
   eventKey: string
   header: HeaderDraft
   catalog: MenuCatalog
-  packagesByKategori: [string, CatalogPackage[]][]
 }) {
   const { dispatch } = useLoaForm()
   const hk = header.key
@@ -89,20 +76,6 @@ function HeaderCard({
         <div className="space-y-1">
           <Label className="text-[11px] text-slate-500">Price/pax (auto)</Label>
           <Input value={price > 0 ? formatRupiah(price) : '—'} readOnly className="bg-slate-50 text-slate-500" />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] text-slate-500">Pakai paket:</span>
-        <div className="flex-1">
-          <PackageCombobox
-            packagesByKategori={packagesByKategori}
-            value=""
-            onChange={(id) => {
-              const filled = packageToHeader(catalog, id)
-              if (filled) dispatch({ type: 'FILL_HEADER_FROM_PACKAGE', eventKey, headerKey: hk, header: filled })
-            }}
-          />
         </div>
       </div>
 

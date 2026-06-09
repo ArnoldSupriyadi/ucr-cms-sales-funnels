@@ -41,7 +41,6 @@ export type LoaFormAction =
   | { type: 'ADD_HEADER'; eventKey: string }
   | { type: 'REMOVE_HEADER'; eventKey: string; headerKey: string }
   | { type: 'SET_HEADER_FIELD'; eventKey: string; headerKey: string; field: 'name' | 'keterangan' | 'pax' | 'amount'; value: string | number }
-  | { type: 'FILL_HEADER_FROM_PACKAGE'; eventKey: string; headerKey: string; header: HeaderDraft }
   // sub-grup
   | { type: 'ADD_SUBGROUP'; eventKey: string; headerKey: string }
   | { type: 'REMOVE_SUBGROUP'; eventKey: string; headerKey: string; subGroupKey: string }
@@ -91,10 +90,6 @@ export function loaFormReducer(state: LoaWizardState, action: LoaFormAction): Lo
       return mapEvent(state, action.eventKey, (e) => ({ ...e, headers: e.headers.filter((h) => h.key !== action.headerKey) }))
     case 'SET_HEADER_FIELD':
       return mapEvent(state, action.eventKey, (e) => mapHeader(e, action.headerKey, (h) => ({ ...h, [action.field]: action.value })))
-    case 'FILL_HEADER_FROM_PACKAGE':
-      return mapEvent(state, action.eventKey, (e) =>
-        mapHeader(e, action.headerKey, (h) => ({ ...action.header, key: h.key, pax: h.pax, amount: h.amount })),
-      )
 
     case 'ADD_SUBGROUP':
       return mapEvent(state, action.eventKey, (e) =>
