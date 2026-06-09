@@ -123,15 +123,15 @@ export function DocPreview() {
             <tr className="bg-slate-100">
               <th className={td + ' text-left'}>Tgl.</th>
               <th className={td + ' text-left'}>Order</th>
-              <th className={td + ' text-right'}>Price</th>
+              <th className={td + ' text-right'}>Harga/pax</th>
               <th className={td + ' text-center'}>Pax</th>
-              <th className={td + ' text-right'}>Amount</th>
+              <th className={td + ' text-right'}>Total</th>
             </tr>
           </thead>
           <tbody>
             {events.map((ev) =>
               ev.headers.map((h, hIdx) => {
-                const price = h.pax > 0 ? h.amount / h.pax : 0
+                const lineTotal = (h.amount || 0) * (h.pax || 0) // amount = harga/pax
                 return (
                   <FragmentRows key={h.key}>
                     <tr>
@@ -140,9 +140,9 @@ export function DocPreview() {
                         {h.name || '—'}
                         {h.keterangan ? <span className="font-normal text-slate-500"> — {h.keterangan}</span> : null}
                       </td>
-                      <td className={td + ' text-right'}>{price > 0 ? formatRupiah(price) : '—'}</td>
+                      <td className={td + ' text-right'}>{h.amount > 0 ? formatRupiah(h.amount) : '—'}</td>
                       <td className={td + ' text-center'}>{h.pax || '—'}</td>
-                      <td className={td + ' text-right font-semibold'}>{formatRupiah(h.amount)}</td>
+                      <td className={td + ' text-right font-semibold'}>{formatRupiah(lineTotal)}</td>
                     </tr>
                     {h.items.map((it) => (
                       <tr key={it.key}>

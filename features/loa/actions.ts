@@ -42,7 +42,8 @@ export async function saveLoaDraft(
     return { success: false, error: 'Tipe order belum diisi — pilih tipe order dulu sebelum simpan LOA' }
   }
 
-  const calc = calculateLoa(headers.map((h) => h.amount), { ...state.pricing, scPct })
+  // amount = harga/pax → total baris = amount × pax; Sub Total 1 = Σ total baris
+  const calc = calculateLoa(headers.map((h) => h.amount * h.pax), { ...state.pricing, scPct })
 
   const { data: existing } = await supabase
     .from('loa')

@@ -5,6 +5,7 @@ import { Trash2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { formatRupiah } from '@/lib/utils/format'
 import { useLoaForm } from '../loa-form-context'
 import { ItemCombobox } from './item-combobox'
 import { CategoryCombobox } from './category-combobox'
@@ -62,6 +63,7 @@ export function MenuTreeEditor({ event, catalog }: { event: EventDraft; catalog:
 function HeaderCard({ eventKey, header, catalog }: { eventKey: string; header: HeaderDraft; catalog: MenuCatalog }) {
   const { dispatch } = useLoaForm()
   const hk = header.key
+  const lineTotal = (header.amount || 0) * (header.pax || 0) // amount = harga/pax
 
   return (
     <div className="space-y-3 rounded-xl border border-indigo-200 border-l-4 border-l-indigo-500 bg-gradient-to-br from-indigo-50/50 to-white px-4 py-3.5 shadow-sm">
@@ -87,16 +89,20 @@ function HeaderCard({ eventKey, header, catalog }: { eventKey: string; header: H
         onChange={(e) => dispatch({ type: 'SET_HEADER_FIELD', eventKey, headerKey: hk, field: 'keterangan', value: e.target.value })}
       />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1">
           <Label className="text-[11px] font-medium text-indigo-600">Pax</Label>
           <Input type="number" min={0} value={header.pax || ''} className="bg-white"
             onChange={(e) => dispatch({ type: 'SET_HEADER_FIELD', eventKey, headerKey: hk, field: 'pax', value: Number(e.target.value) })} />
         </div>
         <div className="space-y-1">
-          <Label className="text-[11px] font-medium text-indigo-600">Amount (Rp)</Label>
+          <Label className="text-[11px] font-medium text-indigo-600">Harga/pax (Rp)</Label>
           <Input type="number" min={0} value={header.amount || ''} className="bg-white"
             onChange={(e) => dispatch({ type: 'SET_HEADER_FIELD', eventKey, headerKey: hk, field: 'amount', value: Number(e.target.value) })} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] font-medium text-indigo-600">Total (auto)</Label>
+          <Input value={lineTotal > 0 ? formatRupiah(lineTotal) : '—'} readOnly className="bg-indigo-50/60 font-semibold text-indigo-700" />
         </div>
       </div>
 

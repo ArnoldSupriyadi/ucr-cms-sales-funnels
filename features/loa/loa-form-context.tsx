@@ -45,7 +45,8 @@ export function LoaFormProvider({
   })
 
   const calc = useMemo(
-    () => calculateLoa(state.events.flatMap((e) => e.headers).map((h) => h.amount), state.pricing),
+    // amount = harga/pax → total baris = amount × pax; Sub Total 1 = Σ total baris
+    () => calculateLoa(state.events.flatMap((e) => e.headers).map((h) => h.amount * h.pax), state.pricing),
     [state.events, state.pricing],
   )
 
