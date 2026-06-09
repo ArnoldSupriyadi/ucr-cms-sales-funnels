@@ -18,6 +18,16 @@ export function searchMenuItems(catalog: MenuCatalog, query: string): string[] {
   return [...names].slice(0, 20)
 }
 
+/** Daftar nama paket cocok query (opsional difilter per kategori). Query kosong → semua (bila kategori diset). Maks 20. */
+export function searchPackages(catalog: MenuCatalog, query: string, kategori?: string): string[] {
+  const q = query.trim().toLowerCase()
+  const pkgs = kategori ? catalog.packages.filter((p) => p.kategori === kategori) : catalog.packages
+  if (!q && !kategori) return []
+  const names = new Set<string>()
+  for (const p of pkgs) if (!q || p.namaPaket.toLowerCase().includes(q)) names.add(p.namaPaket)
+  return [...names].slice(0, 20)
+}
+
 /** Daftar nama kategori daun unik dari katalog yang cocok query. Query kosong → []. Maks 20. */
 export function searchCategories(catalog: MenuCatalog, query: string): string[] {
   const q = query.trim().toLowerCase()

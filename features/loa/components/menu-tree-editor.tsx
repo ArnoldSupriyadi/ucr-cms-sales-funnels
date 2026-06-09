@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { useLoaForm } from '../loa-form-context'
 import { ItemCombobox } from './item-combobox'
 import { CategoryCombobox } from './category-combobox'
+import { HeaderCombobox } from './header-combobox'
 import { PackageCombobox } from './package-combobox'
 import { packageToHeader } from '@/lib/loa/catalog-suggest'
 import type { EventDraft, MenuCatalog, HeaderDraft, SectionDraft, SubGroupDraft, CatalogPackage } from '../types'
@@ -65,13 +66,14 @@ function HeaderCard({ eventKey, header, catalog }: { eventKey: string; header: H
   return (
     <div className="space-y-3 rounded-xl border border-indigo-200 border-l-4 border-l-indigo-500 bg-gradient-to-br from-indigo-50/50 to-white px-4 py-3.5 shadow-sm">
       <div className="flex items-center gap-2">
-        <span className={`${chip} bg-indigo-100 text-indigo-700`}>Header</span>
-        <Input
-          value={header.name}
-          placeholder="Nama header (mis. Full Day Meeting Package)"
-          className="border-indigo-200 bg-white font-semibold focus-visible:ring-indigo-400"
-          onChange={(e) => dispatch({ type: 'SET_HEADER_FIELD', eventKey, headerKey: hk, field: 'name', value: e.target.value })}
-        />
+        <span className={`${chip} shrink-0 bg-indigo-100 text-indigo-700`}>Header</span>
+        <div className="flex-1">
+          <HeaderCombobox
+            value={header.name}
+            catalog={catalog}
+            onChange={(v) => dispatch({ type: 'SET_HEADER_FIELD', eventKey, headerKey: hk, field: 'name', value: v })}
+          />
+        </div>
         <button type="button" className="shrink-0 text-slate-400 hover:text-red-600"
           onClick={() => dispatch({ type: 'REMOVE_HEADER', eventKey, headerKey: hk })}>
           <Trash2 className="h-4 w-4" />
