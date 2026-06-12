@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { searchMenuItems, searchCategories, searchItemsInCategory, searchPackages, packageToHeader } from './catalog-suggest'
+import { searchMenuItems, searchCategories, searchItemsInCategory, searchPackages, packageToHeader, packageComponentsSummary } from './catalog-suggest'
 import type { MenuCatalog } from '@/features/loa/types'
 
 const catalog = {
@@ -59,6 +59,48 @@ describe('searchItemsInCategory', () => {
     expect(searchItemsInCategory(catalog, 'Savoury', 'pas')).toEqual(['Pastel'])
     expect(searchItemsInCategory(catalog, 'Beef', '')).toEqual(['Rendang'])
     expect(searchItemsInCategory(catalog, '', '')).toEqual([])
+  })
+})
+
+describe('packageComponentsSummary (panduan komponen di input Header)', () => {
+  const cat = {
+    packages: [
+      {
+        id: 'p-full', namaPaket: 'Full Day Meeting', kategori: 'Meeting Package',
+        hargaPerPax: null, hargaMinimum: null, hasSelection: true,
+        components: [
+          { componentType: 'buffet', nama: 'Asian Buffet', qty: 1, sortOrder: 1 },
+          { componentType: 'coffee_break', nama: 'Coffee Break', qty: 2, sortOrder: 0 },
+        ],
+      },
+      {
+        id: 'p-cb', namaPaket: 'Coffee Break', kategori: 'Meeting Package',
+        hargaPerPax: null, hargaMinimum: null, hasSelection: false,
+        components: [{ componentType: 'coffee_break', nama: 'Coffee Break', qty: 1, sortOrder: 0 }],
+      },
+      {
+        id: 'p-set', namaPaket: 'Set Menu', kategori: 'Meeting Package',
+        hargaPerPax: null, hargaMinimum: null, hasSelection: false, components: [],
+      },
+    ],
+    categoriesByComponentType: {},
+  } as unknown as MenuCatalog
+
+  it('paket dgn komponen → ringkasan urut sortOrder', () => {
+    expect(packageComponentsSummary(cat, 'Full Day Meeting')).toBe('2× Coffee Break · 1× Asian Buffet')
+  })
+  it('cocok persis case-insensitive + trim', () => {
+    expect(packageComponentsSummary(cat, '  full day meeting ')).toBe('2× Coffee Break · 1× Asian Buffet')
+  })
+  it('komponen tunggal qty 1 sama nama header → null (redundan)', () => {
+    expect(packageComponentsSummary(cat, 'Coffee Break')).toBeNull()
+  })
+  it('paket tanpa komponen → null', () => {
+    expect(packageComponentsSummary(cat, 'Set Menu')).toBeNull()
+  })
+  it('nama tak cocok / kosong → null', () => {
+    expect(packageComponentsSummary(cat, 'Nasi Goreng')).toBeNull()
+    expect(packageComponentsSummary(cat, '')).toBeNull()
   })
 })
 

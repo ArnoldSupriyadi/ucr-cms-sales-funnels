@@ -28,6 +28,21 @@ export function searchPackages(catalog: MenuCatalog, query: string, kategori?: s
   return [...names].slice(0, 20)
 }
 
+/** Ringkasan komponen paket untuk panduan (read-only) di bawah input Nama Header.
+ *  Cari paket yang namanya COCOK PERSIS (case-insensitive, trim) dengan `name`.
+ *  Return null bila: nama kosong, tak ada paket cocok, paket tanpa komponen, atau
+ *  komponen tunggal qty 1 yang namanya sama dengan nama header (redundan, mis. "Coffee Break").
+ *  Selain itu → "2× Coffee Break · 1× Asian Buffet" (format `qty× nama`, urut sortOrder). */
+export function packageComponentsSummary(catalog: MenuCatalog, name: string): string | null {
+  const target = name.trim().toLowerCase()
+  if (!target) return null
+  const pkg = catalog.packages.find((p) => p.namaPaket.trim().toLowerCase() === target)
+  if (!pkg || pkg.components.length === 0) return null
+  const comps = [...pkg.components].sort((a, b) => a.sortOrder - b.sortOrder)
+  if (comps.length === 1 && comps[0].qty === 1 && comps[0].nama.trim().toLowerCase() === target) return null
+  return comps.map((c) => `${c.qty}× ${c.nama}`).join(' · ')
+}
+
 /** Daftar nama kategori daun unik dari katalog (cari/browse). Query kosong → SEMUA (terurut). Maks 30. */
 export function searchCategories(catalog: MenuCatalog, query: string): string[] {
   const q = query.trim().toLowerCase()

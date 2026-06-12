@@ -40,7 +40,10 @@ export function ItemCombobox({
       <Input
         value={value}
         placeholder={placeholder ?? (scoped ? `Pilih/ketik item ${categoryName}` : 'Nama makanan/minuman')}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value)
+          setFocused(true) // mengetik = input fokus; jaga sinkron agar dropdown muncul lagi setelah memilih lalu menghapus
+        }}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 120)}
       />

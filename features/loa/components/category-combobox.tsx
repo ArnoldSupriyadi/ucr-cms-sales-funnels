@@ -33,7 +33,10 @@ export function CategoryCombobox({
         value={value}
         placeholder={placeholder ?? 'Cari/pilih jenis menu (Beef, Soup, Savoury…)'}
         className="text-sm font-medium"
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value)
+          setFocused(true) // mengetik = input fokus; jaga sinkron agar dropdown muncul lagi setelah memilih lalu menghapus
+        }}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 120)}
       />

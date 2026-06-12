@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Input } from '@/components/ui/input'
-import { searchPackages } from '@/lib/loa/catalog-suggest'
+import { searchPackages, packageComponentsSummary } from '@/lib/loa/catalog-suggest'
 import type { MenuCatalog } from '../types'
 
 /**
@@ -24,6 +24,9 @@ export function HeaderCombobox({
     [catalog, value],
   )
   const show = focused && suggestions.length > 0
+  // Panduan komponen paket (read-only) — muncul bila nama header cocok paket berkomponen,
+  // dan saat dropdown saran tidak terbuka agar tidak tabrakan.
+  const componentsHint = useMemo(() => packageComponentsSummary(catalog, value), [catalog, value])
 
   return (
     <div className="relative w-full">
@@ -31,7 +34,10 @@ export function HeaderCombobox({
         value={value}
         placeholder="Nama header (ketik/pilih, mis. Full Day Meeting Package)"
         className="border-indigo-200 bg-white font-semibold focus-visible:ring-indigo-400"
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value)
+          setFocused(true) // mengetik = input fokus; jaga sinkron agar dropdown muncul lagi setelah memilih lalu menghapus
+        }}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 120)}
       />
@@ -51,6 +57,12 @@ export function HeaderCombobox({
               {s}
             </button>
           ))}
+        </div>
+      )}
+      {!show && componentsHint && (
+        <div className="hint-blink mt-1 flex items-center gap-2 rounded-md bg-indigo-50/70 p-2 text-[14px] leading-snug text-[#D51C39]">
+          <span className="font-semibold">Termasuk:</span>
+          <span>{componentsHint}</span>
         </div>
       )}
     </div>
