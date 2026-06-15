@@ -6,9 +6,10 @@ import { searchPackages, packageComponentsSummary } from '@/lib/loa/catalog-sugg
 import type { MenuCatalog } from '../types'
 
 /**
- * Input nama Header: ketik bebas + saran dari nama paket kategori "Meeting Package"
- * (Full Day Meeting, Coffee Break, Half Day, Canape, ...). Memilih hanya mengisi nama.
+ * Input nama Header: ketik bebas + saran dari nama paket kategori "Meeting Package" & "Snack Box"
+ * (Full Day Meeting, Coffee Break, Half Day, Canape, Snack Box Premium/Regular, ...). Memilih hanya mengisi nama.
  */
+const HEADER_SUGGEST_KATEGORI = ['Meeting Package', 'Snack Box']
 export function HeaderCombobox({
   value,
   onChange,
@@ -20,7 +21,7 @@ export function HeaderCombobox({
 }) {
   const [focused, setFocused] = useState(false)
   const suggestions = useMemo(
-    () => searchPackages(catalog, value, 'Meeting Package').filter((s) => s.toLowerCase() !== value.trim().toLowerCase()),
+    () => searchPackages(catalog, value, HEADER_SUGGEST_KATEGORI).filter((s) => s.toLowerCase() !== value.trim().toLowerCase()),
     [catalog, value],
   )
   const show = focused && suggestions.length > 0

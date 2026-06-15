@@ -12,6 +12,10 @@ const catalog = {
         { componentType: 'buffet', nama: 'Buffet', qty: 1, sortOrder: 1 },
       ],
     },
+    {
+      id: 'pkg-snack', namaPaket: 'Snack Box Premium', kategori: 'Snack Box',
+      hargaPerPax: 50000, hargaMinimum: null, hasSelection: false, components: [],
+    },
   ],
   categoriesByComponentType: {
     coffee_break: [
@@ -42,6 +46,12 @@ describe('searchPackages', () => {
     expect(searchPackages(catalog, 'full', 'Meeting Package')).toContain('Full Day Meeting')
     expect(searchPackages(catalog, '', 'Buffet')).toEqual([]) // tak ada paket kategori Buffet di fixture
     expect(searchPackages(catalog, '')).toEqual([]) // tanpa kategori & query kosong → []
+  })
+  it('beberapa kategori (array) → gabung dari semua kategori itu', () => {
+    const r = searchPackages(catalog, '', ['Meeting Package', 'Snack Box'])
+    expect(r).toContain('Full Day Meeting')
+    expect(r).toContain('Snack Box Premium')
+    expect(searchPackages(catalog, 'snack', ['Meeting Package', 'Snack Box'])).toEqual(['Snack Box Premium'])
   })
 })
 

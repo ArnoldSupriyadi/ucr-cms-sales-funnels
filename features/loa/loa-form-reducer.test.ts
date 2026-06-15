@@ -33,6 +33,32 @@ describe('loaFormReducer (Header → Jenis Menu → Item)', () => {
     expect(s.events[0].headers[0].subGroups[0].name).toBe('Beef')
   })
 
+  it('SET_SUBGROUP_FIELD name jadi kosong → item ikut terhapus', () => {
+    let { s, ek, hk } = withHeader()
+    s = loaFormReducer(s, { type: 'ADD_SUBGROUP', eventKey: ek, headerKey: hk })
+    const gk = s.events[0].headers[0].subGroups[0].key
+    s = loaFormReducer(s, { type: 'SET_SUBGROUP_FIELD', eventKey: ek, headerKey: hk, subGroupKey: gk, field: 'name', value: 'Beef' })
+    s = loaFormReducer(s, { type: 'ADD_ITEM', eventKey: ek, headerKey: hk, subGroupKey: gk })
+    s = loaFormReducer(s, { type: 'ADD_ITEM', eventKey: ek, headerKey: hk, subGroupKey: gk })
+    expect(s.events[0].headers[0].subGroups[0].items).toHaveLength(2)
+
+    // kosongkan nama → item dibuang, kartu Jenis Menu tetap ada (siap diketik ulang)
+    s = loaFormReducer(s, { type: 'SET_SUBGROUP_FIELD', eventKey: ek, headerKey: hk, subGroupKey: gk, field: 'name', value: '   ' })
+    expect(s.events[0].headers[0].subGroups).toHaveLength(1)
+    expect(s.events[0].headers[0].subGroups[0].name).toBe('   ')
+    expect(s.events[0].headers[0].subGroups[0].items).toEqual([])
+  })
+
+  it('SET_SUBGROUP_FIELD ganti ke nama lain (non-kosong) → item TETAP', () => {
+    let { s, ek, hk } = withHeader()
+    s = loaFormReducer(s, { type: 'ADD_SUBGROUP', eventKey: ek, headerKey: hk })
+    const gk = s.events[0].headers[0].subGroups[0].key
+    s = loaFormReducer(s, { type: 'SET_SUBGROUP_FIELD', eventKey: ek, headerKey: hk, subGroupKey: gk, field: 'name', value: 'Beef' })
+    s = loaFormReducer(s, { type: 'ADD_ITEM', eventKey: ek, headerKey: hk, subGroupKey: gk })
+    s = loaFormReducer(s, { type: 'SET_SUBGROUP_FIELD', eventKey: ek, headerKey: hk, subGroupKey: gk, field: 'name', value: 'Soup' })
+    expect(s.events[0].headers[0].subGroups[0].items).toHaveLength(1)
+  })
+
   it('ADD_PREFILLED_HEADER menambah header siap pakai (re-key)', () => {
     let s = loaFormReducer(initialState([]), { type: 'ADD_EVENT' })
     const ek = s.events[0].key

@@ -105,7 +105,13 @@ export function loaFormReducer(state: LoaWizardState, action: LoaFormAction): Lo
       return mapEvent(state, action.eventKey, (e) => mapHeader(e, action.headerKey, (h) => ({ ...h, subGroups: h.subGroups.filter((sg) => sg.key !== action.subGroupKey) })))
     case 'SET_SUBGROUP_FIELD':
       return mapEvent(state, action.eventKey, (e) =>
-        mapHeader(e, action.headerKey, (h) => mapSubGroup(h, action.subGroupKey, (sg) => ({ ...sg, [action.field]: action.value }))))
+        mapHeader(e, action.headerKey, (h) => mapSubGroup(h, action.subGroupKey, (sg) => {
+          const next = { ...sg, [action.field]: action.value }
+          // Mengosongkan nama Jenis Menu = membuang isinya: item ikut terhapus
+          // (kartu Jenis Menu tetap ada agar nama baru bisa diketik ulang).
+          if (action.field === 'name' && action.value.trim() === '') next.items = []
+          return next
+        })))
 
     case 'ADD_ITEM':
       return mapEvent(state, action.eventKey, (e) =>

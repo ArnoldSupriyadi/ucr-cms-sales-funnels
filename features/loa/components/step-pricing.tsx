@@ -11,6 +11,12 @@ export function StepPricing() {
   const { state, dispatch } = useLoaForm()
   const { pricing } = state
 
+  // Gaya tombol tersegmen: opsi aktif tersorot, opsi non-aktif redup.
+  const segCls = (active: boolean) =>
+    `flex cursor-pointer items-center gap-2 rounded-lg border-2 px-3 py-1.5 text-sm font-medium transition-colors ${
+      active ? 'border-indigo-400 bg-indigo-50 text-indigo-800' : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+    }`
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -35,12 +41,12 @@ export function StepPricing() {
           <RadioGroup
             value={pricing.handlingType}
             onValueChange={(v) => dispatch({ type: 'SET_PRICING_FIELD', field: 'handlingType', value: v })}
-            className="flex gap-5"
+            className="flex gap-2.5"
           >
-            <label className="flex items-center gap-2 text-sm">
+            <label className={segCls(pricing.handlingType === 'percent')}>
               <RadioGroupItem value="percent" /> Percent (%)
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className={segCls(pricing.handlingType === 'flat')}>
               <RadioGroupItem value="flat" /> Flat (Rp)
             </label>
           </RadioGroup>
@@ -52,10 +58,11 @@ export function StepPricing() {
         </div>
 
         <div>
-          <label className="flex items-center gap-2 text-sm font-semibold">
+          <label className="inline-flex cursor-pointer items-center gap-2.5 rounded-lg border-2 border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition-colors hover:border-amber-400 hover:bg-amber-100">
             <Checkbox
               checked={pricing.discountEnabled}
               onCheckedChange={(c) => dispatch({ type: 'TOGGLE_DISCOUNT', on: c === true })}
+              className="size-5 border-2 border-amber-400 bg-white data-checked:border-amber-500 data-checked:bg-amber-500"
             />
             Pakai diskon?
           </label>
