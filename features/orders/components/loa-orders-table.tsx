@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { ORDER_STATUS_COLORS } from '@/lib/constants/status'
 import { formatDateRange } from '@/lib/utils/format'
+import { loaActionLabel } from '@/lib/loa/action-label'
 import { FileText, ChevronRight, Eye, Download } from 'lucide-react'
 import type { OrderWithLead } from '@/types/domain'
 
@@ -62,11 +63,7 @@ export function LoaOrdersTable({ orders, loaStatusByOrder }: LoaOrdersTableProps
             const loaBadgeCls = loaStatus
               ? LOA_BADGE[loaStatus] ?? 'border-slate-200 bg-slate-50 text-slate-600'
               : 'border-slate-200 bg-slate-50 text-slate-500'
-            const actionLabel = !loaStatus
-              ? 'Buat LOA'
-              : loaStatus === 'draft'
-                ? 'Lanjut LOA'
-                : 'Lihat LOA'
+            const actionLabel = loaActionLabel(loaStatus)
             return (
             <tr key={order.id} className="transition-colors hover:bg-slate-50/60">
               <td className="px-4 py-3">

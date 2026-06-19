@@ -11,6 +11,7 @@ import { ORDER_STATUS_COLORS, ORDER_STATUS_TRANSITIONS } from '@/lib/constants/s
 import { SEGMEN_COLORS } from '@/lib/constants/segmen'
 import { ORDER_TYPES, serviceChargePctForType, type OrderTypeKey } from '@/lib/constants/order-type'
 import { formatDateRange } from '@/lib/utils/format'
+import { loaActionLabel } from '@/lib/loa/action-label'
 import {
   Pencil,
   CalendarDays,
@@ -36,22 +37,26 @@ export default async function OrderDetailPage({
   const [supabase, user] = await Promise.all([createClient(), getAppUser()])
   if (!user) return null
 
-  const { data } = await supabase
-    .from('orders')
-    .select(`
-      *,
-      leads(*, lead_contacts(*)),
-      users!orders_sales_id_fkey(id, name),
-      order_status_logs(*)
-    `)
-    .eq('id', id)
-    .single()
+  const [{ data }, { data: loaRow }] = await Promise.all([
+    supabase
+      .from('orders')
+      .select(`
+        *,
+        leads(*, lead_contacts(*)),
+        users!orders_sales_id_fkey(id, name),
+        order_status_logs(*)
+      `)
+      .eq('id', id)
+      .single(),
+    supabase.from('loa').select('status').eq('booking_id', id).maybeSingle(),
+  ])
 
   if (!data) notFound()
 
   const order = data as OrderWithDetails
   const canEdit = user.permissions['orders.edit'] === true
   const nextStatuses = ORDER_STATUS_TRANSITIONS[order.status]
+  const loaLabel = loaActionLabel(loaRow?.status)
 
   return (
     <div className="space-y-6 w-full">
@@ -260,7 +265,7 @@ export default async function OrderDetailPage({
                   <p className="text-xs text-slate-500">Letter of Agreement</p>
                 </div>
                 <Button size="sm" className="gap-1.5 bg-indigo-500 hover:bg-indigo-600">
-                  Buat LOA
+                  {loaLabel}
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
